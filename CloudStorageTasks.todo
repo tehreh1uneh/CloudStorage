@@ -1,4 +1,7 @@
 Project Cloud Storage:
 
+  Common:
+    ✔ Разбить проект на базовые модули @done (17-10-07 08:48)
+
   Server GUI:
-    ☐ 
+    ☐ Сделать простой интерфейс для Server GUI 
