@@ -14,7 +14,13 @@ public class ServerGUILauncher extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("servergui.fxml"));
+
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("ServerGUI.fxml"));
+        Parent root = loader.load();
+
+        ServerGUI serverGUI = loader.getController();
+        serverGUI.setStage(stage);
+
         stage.setTitle("Cloud Storage [SERVER]");
         stage.setScene(new Scene(root, 600, 400));
         stage.show();

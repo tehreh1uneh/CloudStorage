@@ -20,13 +20,13 @@
                 <RowConstraints/>
             </rowConstraints>
 
-            <Button text="Start server" GridPane.columnIndex="0">
+            <Button onMouseClicked="#onClickStartServer" text="Start server" GridPane.columnIndex="0">
                 <font>
                     <Font name="Monaco Plain:001.001" size="8.0"/>
                 </font>
             </Button>
 
-            <Button text="Stop server" GridPane.columnIndex="3">
+            <Button onMouseClicked="#onClickStopServer" text="Stop server" GridPane.columnIndex="3">
                 <font>
                     <Font name="Monaco Plain:001.001" size="8.0"/>
                 </font>
