@@ -1,6 +1,6 @@
 package com.tehreh1uneh.cloudstorage.client;
 
-import com.tehreh1uneh.cloudstorage.client.auth.AuthScreen;
+import com.tehreh1uneh.cloudstorage.client.authscreen.AuthScreen;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,12 +12,13 @@ public final class ClientGUILauncher extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("auth/AuthScreen.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("authscreen/AuthScreen.fxml"));
         Parent root = loader.load();
 
         AuthScreen authScreen = loader.getController();
         authScreen.setStage(stage);
 
+        stage.setOnCloseRequest(windowEvent -> System.exit(0));
         stage.setTitle("Authorization");
         stage.setScene(new Scene(root, 300, 500));
         stage.setResizable(false);

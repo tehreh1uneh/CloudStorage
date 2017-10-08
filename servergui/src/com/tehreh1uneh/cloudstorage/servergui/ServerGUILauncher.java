@@ -21,6 +21,7 @@ public class ServerGUILauncher extends Application {
         ServerGUI serverGUI = loader.getController();
         serverGUI.setStage(stage);
 
+        stage.setOnCloseRequest(windowEvent -> System.exit(0));
         stage.setTitle("Cloud Storage [SERVER]");
         stage.setScene(new Scene(root, 600, 400));
         stage.show();

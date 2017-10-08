@@ -2,7 +2,6 @@ package com.tehreh1uneh.cloudstorage.common;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 public class ServerSocketThread extends Thread {
@@ -25,16 +24,12 @@ public class ServerSocketThread extends Thread {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             serverSocket.setSoTimeout(timeout);
             eventListener.onReadyServerSocketThread(this, serverSocket);
-            Socket socket;
-
             while (!isInterrupted()) {
                 try {
-                    socket = serverSocket.accept();
+                    eventListener.onAcceptedSocket(this, serverSocket, serverSocket.accept());
                 } catch (SocketTimeoutException e) {
                     eventListener.onTimeOutAccept(this, serverSocket);
-                    continue;
                 }
-                eventListener.onAcceptedSocket(this, serverSocket, socket);
             }
         } catch (IOException e) {
             eventListener.onServerSocketThreadException(this, e);

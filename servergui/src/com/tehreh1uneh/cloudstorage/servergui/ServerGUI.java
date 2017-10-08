@@ -1,13 +1,14 @@
 package com.tehreh1uneh.cloudstorage.servergui;
 
+import com.tehreh1uneh.cloudstorage.server.LogListener;
 import com.tehreh1uneh.cloudstorage.server.Server;
-import com.tehreh1uneh.cloudstorage.server.ServerListener;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +16,13 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public final class ServerGUI implements Initializable, ServerListener {
+import static com.tehreh1uneh.cloudstorage.servergui.Config.DEFAULT_PORT;
+import static com.tehreh1uneh.cloudstorage.servergui.Config.TIMEOUT;
+
+public final class ServerGUI implements Initializable, LogListener, Thread.UncaughtExceptionHandler {
+
+    private Stage stage;
+    private Server server;
 
     //region GUI_fields
     @FXML
@@ -24,34 +31,33 @@ public final class ServerGUI implements Initializable, ServerListener {
     private TextArea logArea;
     //endregion
 
-    private Stage stage;
-    private Server server;
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        Thread.setDefaultUncaughtExceptionHandler(this);
+        server = new Server(this);
+        log("Инициализация оболочки сервера успешно завершена");
+    }
 
+    //region Setters
     void setStage(Stage stage) {
         this.stage = stage;
     }
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        server = new Server(this);
-        logArea.appendText("Server GUI initialisation completed\n");
-    }
-
+    //endregion
 
     //region GUI_events
     @FXML
     private void onClickStartServer() {
-        server.startServer(8189);
+        server.turnOn(DEFAULT_PORT, TIMEOUT);
     }
 
     @FXML
     private void onClickStopServer() {
-        logArea.appendText("Server has been stopped\n");
+        server.turnOff();
     }
 
     @FXML
     private void openSourceCodeLink() {
-        logArea.appendText("Source code link opened\n");
+        log("Source code link opened");
         String url = "https://github.com/tehreh1uneh/CloudStorage";
 
         if (Desktop.isDesktopSupported()) {
@@ -60,20 +66,33 @@ public final class ServerGUI implements Initializable, ServerListener {
                 desktop.browse(new URI(url));
                 sourceCodeLink.setText("Source code");
             } catch (IOException | URISyntaxException e) {
-                logArea.appendText(e.toString());
-                logArea.appendText("\nSource code link: " + url);
+                log(e.toString(), "Source code link: " + url);
             }
         } else {
-            logArea.appendText("\nSource code link: " + url);
+            log("Source code link: " + url);
             sourceCodeLink.setText(url);
         }
     }
     //endregion
 
-
     @Override
-    public void log(Server server, String msg) {
-        logArea.appendText(msg + "\n");
+    public void log(String... msg) {
+        for (int i = 0; i < msg.length; i++) logArea.appendText(msg[i] + "\n");
     }
 
+    @Override
+    public void uncaughtException(Thread thread, Throwable throwable) {
+        throwable.printStackTrace();
+        StackTraceElement[] stackTraceElements = throwable.getStackTrace();
+        String msg;
+
+        if (stackTraceElements.length == 0) {
+            msg = "Пустой stack trace";
+        } else {
+            msg = new StringBuilder().append(throwable.getClass().getCanonicalName()).append(": ").append(throwable.getMessage()).append("\n").append(stackTraceElements[0]).toString();
+        }
+
+        JOptionPane.showMessageDialog(null, msg, "Ошибка:", JOptionPane.ERROR_MESSAGE);
+        System.exit(1);
+    }
 }

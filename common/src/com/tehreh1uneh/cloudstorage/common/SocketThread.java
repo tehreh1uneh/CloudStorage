@@ -1,15 +1,15 @@
 package com.tehreh1uneh.cloudstorage.common;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class SocketThread extends Thread {
 
     private final SocketThreadListener eventListener;
     private final Socket socket;
-    private ObjectOutputStream out;
+    private BufferedOutputStream out;
 
     public SocketThread(SocketThreadListener eventListener, String name, Socket socket) {
         super(name);
@@ -22,17 +22,15 @@ public class SocketThread extends Thread {
     public void run() {
         eventListener.onStartSocketThread(this);
         try {
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-            out = new ObjectOutputStream(socket.getOutputStream());
+            BufferedInputStream in = new BufferedInputStream(socket.getInputStream());
+            out = new BufferedOutputStream(socket.getOutputStream());
             eventListener.onReadySocketThread(this, socket);
 
             while (!isInterrupted()) {
-                try {
-                    Message msg = (Message) in.readObject();
-                    eventListener.onReceiveMessageSocketThread(this, socket, msg);
-                } catch (ClassNotFoundException e) {
-                    eventListener.onExceptionSocketThread(this, socket, e);
-                }
+                if (in.available() == 0) continue;
+                byte[] msg = new byte[in.available()];
+                in.read(msg);
+                eventListener.onReceiveMessageSocketThread(this, socket, msg);
             }
         } catch (IOException e) {
             eventListener.onExceptionSocketThread(this, socket, e);
@@ -46,9 +44,9 @@ public class SocketThread extends Thread {
         }
     }
 
-    public synchronized void send(Message msg) {
+    public synchronized void send(byte[] msg) {
         try {
-            out.writeObject(msg);
+            out.write(msg);
             out.flush();
         } catch (IOException e) {
             eventListener.onExceptionSocketThread(this, socket, e);
@@ -56,7 +54,7 @@ public class SocketThread extends Thread {
         }
     }
 
-    private synchronized void close() {
+    public synchronized void close() {
         interrupt();
         try {
             socket.close();
