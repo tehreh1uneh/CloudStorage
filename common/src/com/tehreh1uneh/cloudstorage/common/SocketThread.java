@@ -7,7 +7,11 @@ import java.net.Socket;
 
 public class SocketThread extends Thread {
 
-    private final SocketThreadListener eventListener;
+    private SocketThreadListener eventListener;
+
+    public void setEventListener(SocketThreadListener eventListener) {
+        this.eventListener = eventListener;
+    }
     private final Socket socket;
     private BufferedOutputStream out;
 

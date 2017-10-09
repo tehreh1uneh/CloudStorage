@@ -9,6 +9,10 @@ import javafx.stage.Stage;
 
 public final class ClientGUILauncher extends Application {
 
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
 
@@ -19,8 +23,8 @@ public final class ClientGUILauncher extends Application {
         authScreen.setStage(stage);
 
         stage.setOnCloseRequest(windowEvent -> System.exit(0));
-        stage.setTitle("Authorization");
-        stage.setScene(new Scene(root, 300, 500));
+        stage.setTitle("Авторизация");
+        stage.setScene(new Scene(root, 300, 400));
         stage.setResizable(false);
         stage.show();
     }

@@ -1,10 +1,15 @@
 package com.tehreh1uneh.cloudstorage.client.authscreen;
 
+import com.tehreh1uneh.cloudstorage.client.mainscreen.MainScreen;
 import com.tehreh1uneh.cloudstorage.common.Messages.*;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
@@ -21,9 +26,9 @@ import static com.tehreh1uneh.cloudstorage.client.Config.DEFAULT_PORT;
 public final class AuthScreen implements Initializable, SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private Stage stage;
+
     private SocketThread socketThread;
     private Converter converter;
-
     //region GUI_fields
     @FXML
     private TextField login;
@@ -54,6 +59,7 @@ public final class AuthScreen implements Initializable, SocketThreadListener, Th
             Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
             socketThread = new SocketThread(this, "SocketThread", socket);
         } catch (IOException e) {
+            // TODO popup
             e.printStackTrace();
         }
     }
@@ -103,7 +109,7 @@ public final class AuthScreen implements Initializable, SocketThreadListener, Th
         if (stackTraceElements.length == 0) {
             msg = "Пустой stack trace";
         } else {
-            msg = new StringBuilder().append(throwable.getClass().getCanonicalName()).append(": ").append(throwable.getMessage()).append("\n").append(stackTraceElements[0]).toString();
+            msg = throwable.getClass().getCanonicalName() + ": " + throwable.getMessage() + "\n" + stackTraceElements[0];
         }
 
         JOptionPane.showMessageDialog(null, msg, "Ошибка:", JOptionPane.ERROR_MESSAGE);
@@ -112,9 +118,28 @@ public final class AuthScreen implements Initializable, SocketThreadListener, Th
 
     private void handleAuthorizeResponse(AuthResponseMessage message) {
         if (message.isAuthorized()) {
-            // TODO change scene
             System.out.println("Успешное подключение к серверу");
+
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/tehreh1uneh/cloudstorage/client/mainscreen/MainScreen.fxml"));
+                    Parent parent = loader.load();
+
+                    stage.setScene(new Scene(parent));
+                    stage.show();
+
+                    MainScreen newController = loader.getController();
+                    newController.setSocketThread(socketThread);
+                    newController.setStage(stage);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Не удалось сменить сцену");
+                }
+            });
+
         } else {
+            // TODO popup
             System.out.println("Неверный логин или пароль");
             disconnect();
         }
