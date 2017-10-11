@@ -11,7 +11,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public final class MainScreen extends BaseScreen implements Initializable, Thread.UncaughtExceptionHandler {
+public final class MainScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionSourceCode() {
@@ -38,11 +38,10 @@ public final class MainScreen extends BaseScreen implements Initializable, Threa
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        Thread.setDefaultUncaughtExceptionHandler(this);
     }
 
-    @Override
-    public void uncaughtException(Thread thread, Throwable throwable) {
-
+    @FXML
+    private void onActionLogOut() {
+        screenManager.logOut();
     }
 }

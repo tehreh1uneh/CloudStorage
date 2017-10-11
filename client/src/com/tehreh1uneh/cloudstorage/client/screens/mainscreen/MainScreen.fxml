@@ -10,6 +10,7 @@
     <top>
         <MenuBar>
             <Menu text="Меню">
+                <MenuItem mnemonicParsing="false" onAction="#onActionLogOut" text="Сменить пользователя"/>
                 <MenuItem onAction="#onActionExit" text="Выход">
 
                 </MenuItem>
@@ -54,8 +55,7 @@
             <ProgressIndicator visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
             <ProgressBar progress="0.0" visible="false" GridPane.columnIndex="3" GridPane.halignment="RIGHT"
                          GridPane.rowIndex="1"/>
-            <Button mnemonicParsing="false" onAction="#onActionSync" text="Синхронизировать"
-                    GridPane.columnIndex="2">
+            <Button mnemonicParsing="false" onAction="#onActionSync" text="Синхронизировать" GridPane.columnIndex="2">
                 <font>
                     <Font name="Monaco Plain:001.001" size="10.0"/>
                 </font>

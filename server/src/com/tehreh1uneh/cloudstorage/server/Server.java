@@ -1,10 +1,14 @@
 package com.tehreh1uneh.cloudstorage.server;
 
-import com.tehreh1uneh.cloudstorage.common.Messages.*;
 import com.tehreh1uneh.cloudstorage.common.ServerSocketThread;
 import com.tehreh1uneh.cloudstorage.common.ServerSocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
+import com.tehreh1uneh.cloudstorage.common.messages.AuthRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.Message;
+import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
+import com.tehreh1uneh.cloudstorage.common.messages.util.Converter;
 import com.tehreh1uneh.cloudstorage.server.Authorization.DatabaseController;
 
 import java.net.ServerSocket;
@@ -86,7 +90,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     @Override
     public void onStopSocketThread(SocketThread socketThread) {
-        log("Сокет остановлен на сервере");
+        log("Остановлен клиентский сокет на сервере");
     }
 
     @Override
@@ -118,6 +122,9 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void handleAuthorizedClient(ClientSocketThread client, Message message) {
+        if (message.getType() == MessageType.DISCONNECT) {
+            client.close();
+        }
     }
 
     private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {

@@ -1,15 +1,12 @@
-package com.tehreh1uneh.cloudstorage.common.Messages;
+package com.tehreh1uneh.cloudstorage.common.messages;
 
 public class AuthResponseMessage extends Message {
 
     private boolean authorized;
     private String message;
 
-    {
-        type = MessageType.AUTH_RESPONSE;
-    }
-
     public AuthResponseMessage(boolean authorized, String message) {
+        super(MessageType.AUTH_RESPONSE);
         this.authorized = authorized;
         this.message = message;
     }

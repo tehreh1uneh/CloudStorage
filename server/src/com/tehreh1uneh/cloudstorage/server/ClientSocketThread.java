@@ -5,21 +5,20 @@ import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 
 import java.net.Socket;
 
-public class ClientSocketThread extends SocketThread {
+class ClientSocketThread extends SocketThread {
 
     private boolean authorized = false;
 
-    public ClientSocketThread(SocketThreadListener eventListener, String name, Socket socket) {
+    ClientSocketThread(SocketThreadListener eventListener, String name, Socket socket) {
         super(eventListener, name, socket);
     }
 
-    public boolean isAuthorized() {
+    boolean isAuthorized() {
         return authorized;
     }
 
-    public void setAuthorized(boolean authorized) {
+    void setAuthorized(boolean authorized) {
         this.authorized = authorized;
     }
-
 
 }

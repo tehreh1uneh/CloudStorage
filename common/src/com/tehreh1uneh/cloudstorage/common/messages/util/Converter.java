@@ -1,4 +1,6 @@
-package com.tehreh1uneh.cloudstorage.common.Messages;
+package com.tehreh1uneh.cloudstorage.common.messages.util;
+
+import com.tehreh1uneh.cloudstorage.common.messages.Message;
 
 import java.io.*;
 

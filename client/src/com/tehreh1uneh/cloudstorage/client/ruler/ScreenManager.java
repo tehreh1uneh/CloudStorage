@@ -2,9 +2,13 @@ package com.tehreh1uneh.cloudstorage.client.ruler;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
-import com.tehreh1uneh.cloudstorage.common.Messages.*;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
+import com.tehreh1uneh.cloudstorage.common.messages.AuthRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.Message;
+import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
+import com.tehreh1uneh.cloudstorage.common.messages.util.Converter;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -28,16 +32,62 @@ public class ScreenManager extends Application implements SocketThreadListener, 
 
     @Override
     public void start(Stage stage) throws Exception {
-
         Thread.setDefaultUncaughtExceptionHandler(this);
         converter = new Converter();
         this.stage = stage;
-
         setAuthScreen();
     }
 
+    private void setAuthScreen() {
+        try {
+            replaceSceneContent("/com/tehreh1uneh/cloudstorage/client/screens/authscreen/AuthScreen.fxml");
 
-    //region SocketThreadListener
+            stage.setOnCloseRequest(windowEvent -> {
+                disconnect();
+                System.exit(0);
+            });
+
+            stage.setTitle("Авторизация");
+            stage.setResizable(false);
+            stage.setWidth(350);
+            stage.setHeight(450);
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Не удалость установить экран авторизации");
+        }
+    }
+
+    private void setMainScreen() {
+        try {
+            replaceSceneContent("/com/tehreh1uneh/cloudstorage/client/screens/mainscreen/MainScreen.fxml");
+            Platform.runLater(() -> {
+                stage.setTitle("Cloud storage");
+                stage.setResizable(true);
+                stage.setWidth(800);
+                stage.setHeight(600);
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Не удалость установить основной экран");
+        }
+    }
+
+    private void replaceSceneContent(String fxml) throws Exception {
+
+        FXMLLoader loader = new FXMLLoader(ScreenManager.class.getResource(fxml));
+        Parent page = loader.load();
+        if (stage.getScene() == null) {
+            stage.setScene(new Scene(page));
+        } else {
+            stage.getScene().setRoot(page);
+        }
+        screen = loader.getController();
+        screen.setScreenManager(this);
+    }
+
+    //region SocketThread
 
     @Override
     public void onStartSocketThread(SocketThread socketThread) {
@@ -70,20 +120,6 @@ public class ScreenManager extends Application implements SocketThreadListener, 
     }
     //endregion
 
-    public void connect() {
-        try {
-            Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
-            socketThread = new SocketThread(this, "SocketThread: " + socket.getInetAddress(), socket);
-        } catch (IOException e) {
-            // TODO popup
-            e.printStackTrace();
-        }
-    }
-
-    private void disconnect() {
-        socketThread.close();
-    }
-
     private void handleAuthorizeResponse(AuthResponseMessage message) {
         if (message.isAuthorized()) {
             System.out.println("Успешное подключение к серверу");
@@ -95,53 +131,26 @@ public class ScreenManager extends Application implements SocketThreadListener, 
         }
     }
 
-    private void setAuthScreen() {
+    public void connect() {
         try {
-            replaceSceneContent("/com/tehreh1uneh/cloudstorage/client/screens/authscreen/AuthScreen.fxml");
-
-            stage.setOnCloseRequest(windowEvent -> {
-                disconnect();
-                System.exit(0);
-            });
-
-            stage.setTitle("Авторизация");
-            stage.setResizable(false);
-            stage.show();
-        } catch (Exception e) {
+            Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
+            socketThread = new SocketThread(this, "SocketThread: " + socket.getInetAddress(), socket);
+        } catch (IOException e) {
+            // TODO popup
             e.printStackTrace();
-            throw new RuntimeException("Не удалость установить экран авторизации");
         }
     }
 
-    private void setMainScreen() {
-        try {
-            replaceSceneContent("/com/tehreh1uneh/cloudstorage/client/screens/mainscreen/MainScreen.fxml");
-            Platform.runLater(() -> {
-                stage.setTitle("Cloud storage");
-                stage.setResizable(true);
-                stage.setWidth(800);
-                stage.setHeight(600);
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Не удалость установить основной экран");
+    private void disconnect() {
+        if (socketThread != null && socketThread.isAlive()) {
+            socketThread.send(converter.objectToBytes(new Message(MessageType.DISCONNECT)));
+            socketThread.close();
         }
     }
 
-    private void replaceSceneContent(String fxml) throws Exception {
-
-        FXMLLoader loader = new FXMLLoader(ScreenManager.class.getResource(fxml));
-        Parent page = loader.load();
-        Scene scene = stage.getScene();
-        if (scene == null) {
-            scene = new Scene(page, 300, 400);
-            stage.setScene(scene);
-        } else {
-            stage.getScene().setRoot(page);
-        }
-        screen = loader.getController();
-        screen.setScreenManager(this);
+    public void logOut() {
+        disconnect();
+        setAuthScreen();
     }
 
     @Override
