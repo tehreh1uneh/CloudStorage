@@ -24,7 +24,6 @@ public class ServerGUILauncher extends Application implements Thread.UncaughtExc
 
     @Override
     public void start(Stage stage) throws Exception {
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("ServerGUI.fxml"));
         Parent root = loader.load();
 
@@ -33,12 +32,10 @@ public class ServerGUILauncher extends Application implements Thread.UncaughtExc
         stage.setScene(new Scene(root, 600, 400));
         stage.show();
 
-        server = new Server(this);
-
         controller = loader.getController();
         controller.setServerGUILauncher(this);
+        server = new Server(this);
         Thread.setDefaultUncaughtExceptionHandler(this);
-
     }
 
     void turnOnServer() {
@@ -66,7 +63,7 @@ public class ServerGUILauncher extends Application implements Thread.UncaughtExc
 
     @SuppressWarnings("ForLoopReplaceableByForEach")
     @Override
-    public void log(String... msg) {
+    public synchronized void log(String... msg) {
         controller.log(msg);
     }
 

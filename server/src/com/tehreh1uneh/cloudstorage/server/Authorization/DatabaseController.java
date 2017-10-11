@@ -20,7 +20,7 @@ public final class DatabaseController implements AuthorizeManager {
     }
 
     @Override
-    public boolean authorize(String login, String password) {
+    public synchronized boolean authorize(String login, String password) {
         try {
             authQuery.setString(1, login);
             authQuery.setString(2, password);

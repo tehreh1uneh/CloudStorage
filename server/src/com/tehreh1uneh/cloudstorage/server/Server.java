@@ -9,6 +9,7 @@ import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
 import com.tehreh1uneh.cloudstorage.common.messages.util.Converter;
+import com.tehreh1uneh.cloudstorage.server.Authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.Authorization.DatabaseController;
 
 import java.net.ServerSocket;
@@ -17,9 +18,10 @@ import java.net.Socket;
 public class Server implements ServerSocketThreadListener, SocketThreadListener {
 
     private final LogListener logListener;
-    private DatabaseController databaseController;
+    private AuthorizeManager authorizeManager;
     private ServerSocketThread serverSocketThread;
     private Converter converter = new Converter();
+    private boolean blocked = false;
 
     public Server(LogListener logListener) {
         this.logListener = logListener;
@@ -32,8 +34,8 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
         serverSocketThread = new ServerSocketThread(this, "ServerSocketThread", port, timeout);
         log("Сервер успешно запущен");
-        databaseController = new DatabaseController();
-        databaseController.initialize();
+        authorizeManager = new DatabaseController();
+        authorizeManager.initialize();
         log("Подключение к СУБД инициализировано");
     }
 
@@ -42,10 +44,36 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             log("Сервер не запущен");
             return;
         }
-        databaseController.dispose();
-        log("Соединение с СУБД разорвано");
-        serverSocketThread.interrupt();
-        log("Сервер останавливается...");
+        if (!blocked) {
+            blocked = true;
+            authorizeManager.dispose();
+            log("Соединение с СУБД разорвано");
+            serverSocketThread.interrupt();
+            log("Сервер останавливается...");
+        }
+    }
+
+    private void handleAuthorizedClient(ClientSocketThread client, Message message) {
+        if (message.getType() == MessageType.DISCONNECT) {
+            client.close();
+        }
+    }
+
+    private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {
+
+        if (message.getType() == MessageType.AUTH_REQUEST) {
+            AuthRequestMessage authRequestMessage = (AuthRequestMessage) message;
+            client.setAuthorized(authorizeManager.authorize(authRequestMessage.getLogin(), authRequestMessage.getPassword()));
+            AuthResponseMessage response = new AuthResponseMessage(client.isAuthorized(), client.isAuthorized() ? "" : "Неверный логин или пароль");
+            client.send(converter.objectToBytes(response));
+        }
+
+        if (!client.isAuthorized()) {
+            client.close();
+            log("Клиент не авторизован, соединение будет разорвано: ", socket.toString());
+        } else {
+            log("Успешная авторизация: ", socket.toString());
+        }
     }
 
     //region ServerSocketThread
@@ -57,6 +85,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     @Override
     public void onStopServerSocketThread(ServerSocketThread thread) {
         log("Сервер остановлен");
+        blocked = false;
     }
 
     @Override
@@ -79,6 +108,8 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     @Override
     public void onServerSocketThreadException(ServerSocketThread thread, Exception e) {
         log("Ошибка серверного сокета");
+        if (authorizeManager != null) authorizeManager.dispose();
+
     }
     //endregion
 
@@ -100,7 +131,6 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     @Override
     public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, byte[] value) {
-
         ClientSocketThread client = (ClientSocketThread) socketThread;
         Message message = converter.bytesToMessage(value);
 
@@ -120,28 +150,4 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private void log(String... msg) {
         logListener.log(msg);
     }
-
-    private void handleAuthorizedClient(ClientSocketThread client, Message message) {
-        if (message.getType() == MessageType.DISCONNECT) {
-            client.close();
-        }
-    }
-
-    private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {
-
-        if (message.getType() == MessageType.AUTH_REQUEST) {
-            AuthRequestMessage authRequestMessage = (AuthRequestMessage) message;
-            client.setAuthorized(databaseController.authorize(authRequestMessage.getLogin(), authRequestMessage.getPassword()));
-            AuthResponseMessage response = new AuthResponseMessage(client.isAuthorized(), client.isAuthorized() ? "" : "Неверный логин или пароль");
-            client.send(converter.objectToBytes(response));
-        }
-
-        if (!client.isAuthorized()) {
-            client.close();
-            log("Клиент не авторизован, соединение будет разорвано: ", socket.toString());
-        } else {
-            log("Успешная авторизация: ", socket.toString());
-        }
-    }
-
 }
