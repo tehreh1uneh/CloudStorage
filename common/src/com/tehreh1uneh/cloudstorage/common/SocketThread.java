@@ -9,9 +9,6 @@ public class SocketThread extends Thread {
 
     private SocketThreadListener eventListener;
 
-    public void setEventListener(SocketThreadListener eventListener) {
-        this.eventListener = eventListener;
-    }
     private final Socket socket;
     private BufferedOutputStream out;
 
@@ -22,6 +19,7 @@ public class SocketThread extends Thread {
         start();
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void run() {
         eventListener.onStartSocketThread(this);

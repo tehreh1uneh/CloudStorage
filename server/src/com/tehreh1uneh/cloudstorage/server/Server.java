@@ -118,7 +118,6 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void handleAuthorizedClient(ClientSocketThread client, Message message) {
-
     }
 
     private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {

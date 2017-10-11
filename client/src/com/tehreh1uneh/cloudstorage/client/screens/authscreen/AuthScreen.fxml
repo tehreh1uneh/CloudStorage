@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 <GridPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.121"
-          fx:controller="com.tehreh1uneh.cloudstorage.client.authscreen.AuthScreen">
+          fx:controller="com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen">
 
     <columnConstraints>
         <ColumnConstraints percentWidth="5"/>
@@ -53,7 +53,7 @@
     </Button>
     <ImageView fitHeight="150.0" fitWidth="200.0" opacity="0.42" pickOnBounds="true" preserveRatio="true"
                GridPane.columnIndex="2" GridPane.rowIndex="3">
-        <Image url="@/com/tehreh1uneh/cloudstorage/client/authscreen/logo.png"/>
+        <Image url="@/com/tehreh1uneh/cloudstorage/client/screens/authscreen/logo.png"/>
     </ImageView>
 
 </GridPane>

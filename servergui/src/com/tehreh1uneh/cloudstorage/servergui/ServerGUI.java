@@ -75,6 +75,7 @@ public final class ServerGUI implements Initializable, LogListener, Thread.Uncau
     }
     //endregion
 
+    @SuppressWarnings("ForLoopReplaceableByForEach")
     @Override
     public void log(String... msg) {
         for (int i = 0; i < msg.length; i++) logArea.appendText(msg[i] + "\n");
@@ -89,7 +90,7 @@ public final class ServerGUI implements Initializable, LogListener, Thread.Uncau
         if (stackTraceElements.length == 0) {
             msg = "Пустой stack trace";
         } else {
-            msg = new StringBuilder().append(throwable.getClass().getCanonicalName()).append(": ").append(throwable.getMessage()).append("\n").append(stackTraceElements[0]).toString();
+            msg = throwable.getClass().getCanonicalName() + ": " + throwable.getMessage() + "\n" + stackTraceElements[0];
         }
 
         JOptionPane.showMessageDialog(null, msg, "Ошибка:", JOptionPane.ERROR_MESSAGE);
