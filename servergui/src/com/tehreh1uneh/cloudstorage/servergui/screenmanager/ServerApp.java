@@ -1,7 +1,8 @@
-package com.tehreh1uneh.cloudstorage.servergui;
+package com.tehreh1uneh.cloudstorage.servergui.screenmanager;
 
 import com.tehreh1uneh.cloudstorage.server.LogListener;
 import com.tehreh1uneh.cloudstorage.server.Server;
+import com.tehreh1uneh.cloudstorage.servergui.screens.mainscreen.MainScreen;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,17 +15,17 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static com.tehreh1uneh.cloudstorage.servergui.Config.DEFAULT_PORT;
-import static com.tehreh1uneh.cloudstorage.servergui.Config.TIMEOUT;
+import static com.tehreh1uneh.cloudstorage.servergui.screenmanager.Config.DEFAULT_PORT;
+import static com.tehreh1uneh.cloudstorage.servergui.screenmanager.Config.TIMEOUT;
 
-public class ServerGUILauncher extends Application implements Thread.UncaughtExceptionHandler, LogListener {
+public class ServerApp extends Application implements Thread.UncaughtExceptionHandler, LogListener {
 
     private Server server;
-    private ServerGUI controller;
+    private MainScreen controller;
 
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("ServerGUI.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/tehreh1uneh/cloudstorage/servergui/screens/mainscreen/MainScreen.fxml"));
         Parent root = loader.load();
 
         stage.setOnCloseRequest(windowEvent -> System.exit(0));
@@ -33,20 +34,20 @@ public class ServerGUILauncher extends Application implements Thread.UncaughtExc
         stage.show();
 
         controller = loader.getController();
-        controller.setServerGUILauncher(this);
+        controller.setServerApp(this);
         server = new Server(this);
         Thread.setDefaultUncaughtExceptionHandler(this);
     }
 
-    void turnOnServer() {
+    public void turnOnServer() {
         server.turnOn(DEFAULT_PORT, TIMEOUT);
     }
 
-    void turnOffServer() {
+    public void turnOffServer() {
         server.turnOff();
     }
 
-    void openSourceCodeLink() {
+    public void openSourceCodeLink() {
         String url = "https://github.com/tehreh1uneh/CloudStorage";
 
         if (Desktop.isDesktopSupported()) {

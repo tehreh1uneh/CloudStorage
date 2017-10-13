@@ -5,7 +5,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<GridPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.121"
+<GridPane xmlns:fx="http://javafx.com/fxml/1" onKeyPressed="#onKeyPressed" xmlns="http://javafx.com/javafx/8.0.121"
           fx:controller="com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen">
 
     <columnConstraints>
@@ -55,5 +55,6 @@
                GridPane.columnIndex="2" GridPane.rowIndex="3">
         <Image url="@/com/tehreh1uneh/cloudstorage/client/screens/authscreen/logo.png"/>
     </ImageView>
+    <ProgressIndicator fx:id="progressIndicator" visible="false" GridPane.columnIndex="2" GridPane.rowIndex="8"/>
 
 </GridPane>

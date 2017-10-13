@@ -1,4 +1,4 @@
-package com.tehreh1uneh.cloudstorage.client.ruler;
+package com.tehreh1uneh.cloudstorage.client.screenmanager;
 
 class Config {
     static final String DEFAULT_IP = "127.0.0.1";

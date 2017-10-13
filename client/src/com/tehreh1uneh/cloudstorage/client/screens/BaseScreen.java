@@ -1,12 +1,12 @@
 package com.tehreh1uneh.cloudstorage.client.screens;
 
-import com.tehreh1uneh.cloudstorage.client.ruler.ScreenManager;
+import com.tehreh1uneh.cloudstorage.client.screenmanager.ClientApp;
 
 public class BaseScreen {
 
-    protected ScreenManager screenManager;
+    protected ClientApp clientApp;
 
-    public void setScreenManager(ScreenManager screenManager) {
-        this.screenManager = screenManager;
+    public void setClientApp(ClientApp clientApp) {
+        this.clientApp = clientApp;
     }
 }

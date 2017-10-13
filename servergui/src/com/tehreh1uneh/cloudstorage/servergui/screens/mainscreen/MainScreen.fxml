@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.121"
-            fx:controller="com.tehreh1uneh.cloudstorage.servergui.ServerGUI">
+            fx:controller="com.tehreh1uneh.cloudstorage.servergui.screens.mainscreen.MainScreen">
     <top>
         <GridPane xmlns:fx="http://javafx.com/fxml/1" alignment="CENTER" xmlns="http://javafx.com/javafx/8.0.121">
 

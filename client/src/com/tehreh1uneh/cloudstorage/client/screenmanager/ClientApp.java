@@ -1,4 +1,4 @@
-package com.tehreh1uneh.cloudstorage.client.ruler;
+package com.tehreh1uneh.cloudstorage.client.screenmanager;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
@@ -20,10 +20,10 @@ import javax.swing.*;
 import java.io.IOException;
 import java.net.Socket;
 
-import static com.tehreh1uneh.cloudstorage.client.ruler.Config.DEFAULT_IP;
-import static com.tehreh1uneh.cloudstorage.client.ruler.Config.DEFAULT_PORT;
+import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_IP;
+import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_PORT;
 
-public class ScreenManager extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
+public class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private Stage stage;
     private SocketThread socketThread;
@@ -76,7 +76,7 @@ public class ScreenManager extends Application implements SocketThreadListener, 
 
     private void replaceSceneContent(String fxml) throws Exception {
 
-        FXMLLoader loader = new FXMLLoader(ScreenManager.class.getResource(fxml));
+        FXMLLoader loader = new FXMLLoader(ClientApp.class.getResource(fxml));
         Parent page = loader.load();
         if (stage.getScene() == null) {
             stage.setScene(new Scene(page));
@@ -84,7 +84,7 @@ public class ScreenManager extends Application implements SocketThreadListener, 
             stage.getScene().setRoot(page);
         }
         screen = loader.getController();
-        screen.setScreenManager(this);
+        screen.setClientApp(this);
     }
 
     //region SocketThread
@@ -123,11 +123,13 @@ public class ScreenManager extends Application implements SocketThreadListener, 
     private void handleAuthorizeResponse(AuthResponseMessage message) {
         if (message.isAuthorized()) {
             System.out.println("Успешное подключение к серверу");
+            ((AuthScreen) screen).unblock();
             setMainScreen();
         } else {
             // TODO popup
             System.out.println("Неверный логин или пароль");
             disconnect();
+            ((AuthScreen) screen).unblock();
         }
     }
 
@@ -135,8 +137,10 @@ public class ScreenManager extends Application implements SocketThreadListener, 
         try {
             Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
             socketThread = new SocketThread(this, "SocketThread: " + socket.getInetAddress(), socket);
+            ((AuthScreen) screen).unblock();
         } catch (IOException e) {
             // TODO popup
+            ((AuthScreen) screen).unblock();
             e.printStackTrace();
         }
     }

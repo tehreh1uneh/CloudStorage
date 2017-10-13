@@ -42,6 +42,6 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionLogOut() {
-        screenManager.logOut();
+        clientApp.logOut();
     }
 }
