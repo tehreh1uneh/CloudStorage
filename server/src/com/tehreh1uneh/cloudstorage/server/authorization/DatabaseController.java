@@ -1,8 +1,12 @@
-package com.tehreh1uneh.cloudstorage.server.Authorization;
+package com.tehreh1uneh.cloudstorage.server.authorization;
+
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 
 public final class DatabaseController implements AuthorizeManager {
+
+    private static final Logger logger = Logger.getLogger(DatabaseController.class);
 
     private Connection connection;
     private PreparedStatement authQuery;
@@ -13,9 +17,10 @@ public final class DatabaseController implements AuthorizeManager {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection("jdbc:sqlite:server/CloudStorage_DB.sqlite3");
             authQuery = connection.prepareStatement("SELECT id FROM users WHERE login=? AND password=?");
+            logger.info("JDBC инициализирован");
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Не удалось инициализировать подключение к СУБД");
+            logger.fatal("Ошибка инициализации JDBC", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -27,8 +32,8 @@ public final class DatabaseController implements AuthorizeManager {
             ResultSet res = authQuery.executeQuery();
             return res.next();
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Ошибка при выполнении запроса авторизации");
+            logger.fatal("Ошибка запроса авторизации", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -38,8 +43,8 @@ public final class DatabaseController implements AuthorizeManager {
             authQuery.close();
             connection.close();
         } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Ошибка при выгрузке ресурсов менеджера СУБД");
+            logger.fatal("Ошибка при выгрузке ресурсов менеджера СУБД", e);
+            throw new RuntimeException(e);
         }
     }
 }

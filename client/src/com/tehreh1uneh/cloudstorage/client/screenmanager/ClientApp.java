@@ -15,6 +15,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -24,6 +25,8 @@ import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_I
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_PORT;
 
 public class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
+
+    private static final Logger logger = Logger.getLogger(ClientApp.class);
 
     private Stage stage;
     private SocketThread socketThread;
@@ -36,6 +39,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         converter = new Converter();
         this.stage = stage;
         setAuthScreen();
+        logger.info("Клиентский GUI запущен");
     }
 
     private void setAuthScreen() {
@@ -52,8 +56,10 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             stage.setWidth(350);
             stage.setHeight(450);
             stage.show();
+
+            logger.info("Успешно установлен экран авторизации");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.fatal("Не удалость установить экран авторизации", e);
             throw new RuntimeException("Не удалость установить экран авторизации");
         }
     }
@@ -68,8 +74,9 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
                 stage.setHeight(600);
             });
 
+            logger.info("Успешно установлен основной экран");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.fatal("Не удалость установить основной экран", e);
             throw new RuntimeException("Не удалость установить основной экран");
         }
     }
@@ -91,23 +98,25 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     @Override
     public void onStartSocketThread(SocketThread socketThread) {
-        System.out.println("Клиентский SocketThread запушен");
+        logger.info("Клиентский SocketThread запушен");
     }
 
     @Override
     public void onStopSocketThread(SocketThread socketThread) {
-        System.out.println("Клиентский SocketThread  остановлен");
+        logger.info("Клиентский SocketThread  остановлен");
     }
 
     @Override
     public void onReadySocketThread(SocketThread socketThread, Socket socket) {
-        System.out.println("Клиентский SocketThread  готов к работе");
+        logger.info("Клиентский SocketThread  готов к работе");
         AuthScreen authScreen = (AuthScreen) screen;
         socketThread.send(converter.objectToBytes(new AuthRequestMessage(authScreen.getLogin(), authScreen.getPassword())));
+        logger.info("Отправлен запрос авторизации на сервер");
     }
 
     @Override
     public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, byte[] value) {
+        logger.info("Получено сообщение с сервера");
         Message message = converter.bytesToMessage(value);
         if (message.getType() == MessageType.AUTH_RESPONSE) {
             handleAuthorizeResponse((AuthResponseMessage) message);
@@ -122,12 +131,12 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     private void handleAuthorizeResponse(AuthResponseMessage message) {
         if (message.isAuthorized()) {
-            System.out.println("Успешное подключение к серверу");
+            logger.info("Клиент успешно авторизован на сервере");
             ((AuthScreen) screen).unblock();
             setMainScreen();
         } else {
             // TODO popup
-            System.out.println("Неверный логин или пароль");
+            logger.info("Запрос авторизации отклонен сервером");
             disconnect();
             ((AuthScreen) screen).unblock();
         }
@@ -137,18 +146,20 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         try {
             Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
             socketThread = new SocketThread(this, "SocketThread: " + socket.getInetAddress(), socket);
-            ((AuthScreen) screen).unblock();
+            logger.info("Успешно создан сокет для соединения с сервером");
         } catch (IOException e) {
             // TODO popup
+            logger.info("Не удалось установить соединение с сервером", e);
             ((AuthScreen) screen).unblock();
-            e.printStackTrace();
         }
     }
 
     private void disconnect() {
         if (socketThread != null && socketThread.isAlive()) {
             socketThread.send(converter.objectToBytes(new Message(MessageType.DISCONNECT)));
+            logger.info("Серверу отправлен запрос на отключение");
             socketThread.close();
+            logger.info("Соединение с сервером разорвано");
         }
     }
 
@@ -158,18 +169,9 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     }
 
     @Override
-    public void uncaughtException(Thread thread, Throwable throwable) {
-        throwable.printStackTrace();
-        StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-        String msg;
-
-        if (stackTraceElements.length == 0) {
-            msg = "Пустой stack trace";
-        } else {
-            msg = throwable.getClass().getCanonicalName() + ": " + throwable.getMessage() + "\n" + stackTraceElements[0];
-        }
-
-        JOptionPane.showMessageDialog(null, msg, "Ошибка:", JOptionPane.ERROR_MESSAGE);
+    public void uncaughtException(Thread thread, Throwable e) {
+        logger.fatal("Ошибка клиентского приложения", e);
+        JOptionPane.showMessageDialog(null, "Возникла непредвиденная ошибка, приложение будет закрыто.", "Ошибка:", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
 }

@@ -1,6 +1,5 @@
 package com.tehreh1uneh.cloudstorage.servergui.screenmanager;
 
-import com.tehreh1uneh.cloudstorage.server.LogListener;
 import com.tehreh1uneh.cloudstorage.server.Server;
 import com.tehreh1uneh.cloudstorage.servergui.screens.mainscreen.MainScreen;
 import javafx.application.Application;
@@ -8,18 +7,16 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.apache.log4j.Logger;
 
 import javax.swing.*;
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import static com.tehreh1uneh.cloudstorage.servergui.screenmanager.Config.DEFAULT_PORT;
 import static com.tehreh1uneh.cloudstorage.servergui.screenmanager.Config.TIMEOUT;
 
-public class ServerApp extends Application implements Thread.UncaughtExceptionHandler, LogListener {
+public class ServerApp extends Application implements Thread.UncaughtExceptionHandler{
 
+    private static final Logger logger = Logger.getLogger(ServerApp.class);
     private Server server;
     private MainScreen controller;
 
@@ -35,8 +32,9 @@ public class ServerApp extends Application implements Thread.UncaughtExceptionHa
 
         controller = loader.getController();
         controller.setServerApp(this);
-        server = new Server(this);
+        server = new Server();
         Thread.setDefaultUncaughtExceptionHandler(this);
+        logger.info("Серверное приложение стартовано");
     }
 
     public void turnOnServer() {
@@ -47,40 +45,10 @@ public class ServerApp extends Application implements Thread.UncaughtExceptionHa
         server.turnOff();
     }
 
-    public void openSourceCodeLink() {
-        String url = "https://github.com/tehreh1uneh/CloudStorage";
-
-        if (Desktop.isDesktopSupported()) {
-            try {
-                Desktop.getDesktop().browse(new URI(url));
-                controller.sourceCodeLink.setText("Source code");
-            } catch (IOException | URISyntaxException e) {
-                log(e.toString(), "\nОшибка при открытии ссылки на исходный код");
-            }
-        } else {
-            controller.sourceCodeLink.setText(url);
-        }
-    }
-
-    @SuppressWarnings("ForLoopReplaceableByForEach")
     @Override
-    public synchronized void log(String... msg) {
-        controller.log(msg);
-    }
-
-    @Override
-    public void uncaughtException(Thread thread, Throwable throwable) {
-        throwable.printStackTrace();
-        StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-        String msg;
-
-        if (stackTraceElements.length == 0) {
-            msg = "Пустой stack trace";
-        } else {
-            msg = throwable.getClass().getCanonicalName() + ": " + throwable.getMessage() + "\n" + stackTraceElements[0];
-        }
-
-        JOptionPane.showMessageDialog(null, msg, "Ошибка:", JOptionPane.ERROR_MESSAGE);
+    public void uncaughtException(Thread thread, Throwable e) {
+        logger.fatal("Ошибка в потоке " + thread.getName(), e);
+        JOptionPane.showMessageDialog(null, "Возникла непредвиденная ошибка, приложение будет закрыто.", "Ошибка:", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
 }

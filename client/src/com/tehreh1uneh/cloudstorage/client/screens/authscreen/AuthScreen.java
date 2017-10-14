@@ -1,6 +1,7 @@
 package com.tehreh1uneh.cloudstorage.client.screens.authscreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.PasswordField;
@@ -8,11 +9,14 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import org.apache.log4j.Logger;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public final class AuthScreen extends BaseScreen implements Initializable {
+
+    private static final Logger logger = Logger.getLogger(AuthScreen.class);
 
     @FXML
     private TextField login;
@@ -24,7 +28,7 @@ public final class AuthScreen extends BaseScreen implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        System.out.println("Инициализация экрана авторизации");
+        logger.info("Экран авторизации успешно инициализирован");
     }
 
     public String getLogin() {
@@ -35,23 +39,11 @@ public final class AuthScreen extends BaseScreen implements Initializable {
         return password.getText();
     }
 
-    @FXML
-    private void mouseClickedAuth() {
-        connect();
-    }
-
-    @FXML
-    private void onKeyPressed(KeyEvent keyEvent) {
-        if (keyEvent.getCode() == KeyCode.ENTER) {
-            connect();
-        }
-    }
-
     private void connect() {
         if (!blocked) {
+            logger.info("Интерфейс заблокирован. Попытка подлючения к серверу");
             block();
             new Thread(() -> clientApp.connect()).start();
-
         }
     }
 
@@ -63,10 +55,15 @@ public final class AuthScreen extends BaseScreen implements Initializable {
     }
 
     public void unblock() {
+        logger.info("Интерфейс разблокирован");
         blocked = false;
         login.setEditable(true);
         password.setEditable(true);
         progressIndicator.setVisible(false);
+    }
 
+    @FXML
+    private void onActionAuth(ActionEvent actionEvent) {
+        connect();
     }
 }

@@ -9,47 +9,46 @@ import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
 import com.tehreh1uneh.cloudstorage.common.messages.util.Converter;
-import com.tehreh1uneh.cloudstorage.server.Authorization.AuthorizeManager;
-import com.tehreh1uneh.cloudstorage.server.Authorization.DatabaseController;
+import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
+import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
+import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server implements ServerSocketThreadListener, SocketThreadListener {
 
-    private final LogListener logListener;
+    private static final Logger logger = Logger.getLogger(Server.class);
     private AuthorizeManager authorizeManager;
     private ServerSocketThread serverSocketThread;
     private Converter converter = new Converter();
     private boolean blocked = false;
 
-    public Server(LogListener logListener) {
-        this.logListener = logListener;
-    }
 
     public void turnOn(int port, int timeout) {
         if (serverSocketThread != null && serverSocketThread.isAlive()) {
-            log("Сервер был запущен ранее");
+            logger.info("Сервер был запущен ранее");
             return;
         }
         serverSocketThread = new ServerSocketThread(this, "ServerSocketThread", port, timeout);
-        log("Сервер успешно запущен");
+        logger.info("Сервер успешно запущен");
         authorizeManager = new DatabaseController();
         authorizeManager.initialize();
-        log("Подключение к СУБД инициализировано");
+        logger.info("Подключение к СУБД инициализировано");
     }
 
     public void turnOff() {
         if (serverSocketThread == null || !serverSocketThread.isAlive()) {
-            log("Сервер не запущен");
+            logger.info("Сервер не запущен");
             return;
         }
         if (!blocked) {
             blocked = true;
             authorizeManager.dispose();
-            log("Соединение с СУБД разорвано");
+            logger.info("Соединение с СУБД разорвано");
             serverSocketThread.interrupt();
-            log("Сервер останавливается...");
+            logger.info("Серверу отправлен interrupt");
         }
     }
 
@@ -70,63 +69,63 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
         if (!client.isAuthorized()) {
             client.close();
-            log("Клиент не авторизован, соединение будет разорвано: ", socket.toString());
+            logger.info("Ошибка авторизации клиента: " + socket.toString());
         } else {
-            log("Успешная авторизация: ", socket.toString());
+            logger.info("Клиент успешно авторизован: " + socket.toString());
         }
     }
 
     //region ServerSocketThread
     @Override
     public void onStartServerSocketThread(ServerSocketThread thread) {
-        log("Серверный сокет стартован");
+        logger.info("Серверный сокет стартован");
     }
 
     @Override
     public void onStopServerSocketThread(ServerSocketThread thread) {
-        log("Сервер остановлен");
+        logger.info("Сервер остановлен");
         blocked = false;
+        if (authorizeManager != null) authorizeManager.dispose();
     }
 
     @Override
     public void onReadyServerSocketThread(ServerSocketThread thread, ServerSocket serverSocket) {
-        log("Серверный сокет готов к работе");
+        logger.info("Серверный сокет готов к работе");
     }
 
     @Override
     public void onAcceptedSocket(ServerSocketThread thread, ServerSocket serverSocket, Socket socket) {
-        log("Клиент присоединился: ", socket.toString());
+        logger.info("Клиент присоединился: " + socket.toString());
         String threadName = "Socket thread: " + socket.getInetAddress() + ":" + socket.getPort();
         new ClientSocketThread(this, threadName, socket);
     }
 
     @Override
     public void onTimeOutAccept(ServerSocketThread thread, ServerSocket serverSocket) {
-        log("Таймаут серверного сокета");
+        logger.trace("Таймаут серверного сокета");
     }
 
     @Override
     public void onServerSocketThreadException(ServerSocketThread thread, Exception e) {
-        log("Ошибка серверного сокета");
+        logger.warn("Ошибка серверного сокета", e);
         if (authorizeManager != null) authorizeManager.dispose();
-
     }
     //endregion
 
     //region SocketThread
     @Override
     public void onStartSocketThread(SocketThread socketThread) {
-        log("Сокет стартован на сервере");
+        logger.info("Клиентский сокет стартован на сервере");
     }
 
     @Override
     public void onStopSocketThread(SocketThread socketThread) {
-        log("Остановлен клиентский сокет на сервере");
+        logger.info("Клиентский сокет остановлен на сервере");
     }
 
     @Override
     public void onReadySocketThread(SocketThread socketThread, Socket socket) {
-        log("Сокет на сервере готов к работе");
+        logger.info("Клиентский сокет на сервере готов к работе");
     }
 
     @Override
@@ -143,11 +142,12 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     @Override
     public void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e) {
-        log("Сокет на сервере получил ошибку");
+        logger.fatal("Ошибка в клиентском сокете: " + socket.getInetAddress() + ":" + socket.getPort(), e);
+        try {
+            socket.close();
+        } catch (IOException es) {
+            logger.error("Не удалось закрыть сокет, в котором возникла ошибка.", es);
+        }
     }
     //endregion
-
-    private void log(String... msg) {
-        logListener.log(msg);
-    }
 }

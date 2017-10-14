@@ -1,4 +1,4 @@
-package com.tehreh1uneh.cloudstorage.server.Authorization;
+package com.tehreh1uneh.cloudstorage.server.authorization;
 
 public interface AuthorizeManager {
 

@@ -5,7 +5,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<GridPane xmlns:fx="http://javafx.com/fxml/1" onKeyPressed="#onKeyPressed" xmlns="http://javafx.com/javafx/8.0.121"
+<GridPane xmlns:fx="http://javafx.com/fxml/1"  xmlns="http://javafx.com/javafx/8.0.121"
           fx:controller="com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen">
 
     <columnConstraints>
@@ -32,7 +32,7 @@
             <Font name="Monaco Plain:001.001" size="10.0"/>
         </font>
     </Label>
-    <TextField fx:id="login" GridPane.columnIndex="2" GridPane.halignment="LEFT" GridPane.rowIndex="5">
+    <TextField fx:id="login" onAction="#onActionAuth" GridPane.columnIndex="2" GridPane.halignment="LEFT" GridPane.rowIndex="5">
         <font>
             <Font name="Monaco Plain:001.001" size="10.0"/>
         </font>
@@ -43,9 +43,9 @@
             <Font name="Monaco Plain:001.001" size="10.0"/>
         </font>
     </Label>
-    <PasswordField fx:id="password" GridPane.columnIndex="2" GridPane.halignment="LEFT" GridPane.rowIndex="6"/>
+    <PasswordField fx:id="password" onAction="#onActionAuth" GridPane.columnIndex="2" GridPane.halignment="LEFT" GridPane.rowIndex="6"/>
 
-    <Button defaultButton="true" onMouseClicked="#mouseClickedAuth" text="Войти" textAlignment="CENTER"
+    <Button defaultButton="true" onAction="#onActionAuth" text="Войти" textAlignment="CENTER"
             GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="7" GridPane.valignment="TOP">
         <font>
             <Font name="Monaco Plain:001.001" size="11.0"/>
