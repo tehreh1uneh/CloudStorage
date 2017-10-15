@@ -8,7 +8,6 @@ import com.tehreh1uneh.cloudstorage.common.messages.AuthRequestMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
-import com.tehreh1uneh.cloudstorage.common.messages.util.Converter;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -27,16 +26,17 @@ import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_P
 public class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private static final Logger logger = Logger.getLogger(ClientApp.class);
-
     private Stage stage;
     private SocketThread socketThread;
-    private Converter converter;
     private BaseScreen screen;
+
+    public Stage getStage() {
+        return stage;
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
         Thread.setDefaultUncaughtExceptionHandler(this);
-        converter = new Converter();
         this.stage = stage;
         setAuthScreen();
         logger.info("Клиентский GUI запущен");
@@ -110,14 +110,13 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     public void onReadySocketThread(SocketThread socketThread, Socket socket) {
         logger.info("Клиентский SocketThread  готов к работе");
         AuthScreen authScreen = (AuthScreen) screen;
-        socketThread.send(converter.objectToBytes(new AuthRequestMessage(authScreen.getLogin(), authScreen.getPassword())));
+        socketThread.send(new AuthRequestMessage(authScreen.getLogin(), authScreen.getPassword()));
         logger.info("Отправлен запрос авторизации на сервер");
     }
 
     @Override
-    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, byte[] value) {
+    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
         logger.info("Получено сообщение с сервера");
-        Message message = converter.bytesToMessage(value);
         if (message.getType() == MessageType.AUTH_RESPONSE) {
             handleAuthorizeResponse((AuthResponseMessage) message);
         }
@@ -156,7 +155,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     private void disconnect() {
         if (socketThread != null && socketThread.isAlive()) {
-            socketThread.send(converter.objectToBytes(new Message(MessageType.DISCONNECT)));
+            socketThread.send(new Message(MessageType.DISCONNECT));
             logger.info("Серверу отправлен запрос на отключение");
             socketThread.close();
             logger.info("Соединение с сервером разорвано");
@@ -174,4 +173,9 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         JOptionPane.showMessageDialog(null, "Возникла непредвиденная ошибка, приложение будет закрыто.", "Ошибка:", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
+
+    public void send(Message message) {
+        socketThread.send(message);
+    }
+
 }

@@ -4,11 +4,7 @@ import com.tehreh1uneh.cloudstorage.common.ServerSocketThread;
 import com.tehreh1uneh.cloudstorage.common.ServerSocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
-import com.tehreh1uneh.cloudstorage.common.messages.AuthRequestMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.Message;
-import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
-import com.tehreh1uneh.cloudstorage.common.messages.util.Converter;
+import com.tehreh1uneh.cloudstorage.common.messages.*;
 import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
 import org.apache.log4j.Logger;
@@ -16,13 +12,14 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Server implements ServerSocketThreadListener, SocketThreadListener {
 
     private static final Logger logger = Logger.getLogger(Server.class);
     private AuthorizeManager authorizeManager;
     private ServerSocketThread serverSocketThread;
-    private Converter converter = new Converter();
     private boolean blocked = false;
 
 
@@ -55,6 +52,8 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private void handleAuthorizedClient(ClientSocketThread client, Message message) {
         if (message.getType() == MessageType.DISCONNECT) {
             client.close();
+        } else if (message.getType() == MessageType.FILE) {
+            handleFileMessage((FileMessage) message);
         }
     }
 
@@ -64,7 +63,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             AuthRequestMessage authRequestMessage = (AuthRequestMessage) message;
             client.setAuthorized(authorizeManager.authorize(authRequestMessage.getLogin(), authRequestMessage.getPassword()));
             AuthResponseMessage response = new AuthResponseMessage(client.isAuthorized(), client.isAuthorized() ? "" : "Неверный логин или пароль");
-            client.send(converter.objectToBytes(response));
+            client.send(response);
         }
 
         if (!client.isAuthorized()) {
@@ -74,6 +73,15 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             logger.info("Клиент успешно авторизован: " + socket.toString());
         }
     }
+
+    private void handleFileMessage(FileMessage message) {
+        try {
+            Files.write(Paths.get("C:/Users/eurythmic/Desktop/123/" + message.getName()), message.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     //region ServerSocketThread
     @Override
@@ -129,10 +137,8 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     @Override
-    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, byte[] value) {
+    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
         ClientSocketThread client = (ClientSocketThread) socketThread;
-        Message message = converter.bytesToMessage(value);
-
         if (client.isAuthorized()) {
             handleAuthorizedClient(client, message);
         } else {

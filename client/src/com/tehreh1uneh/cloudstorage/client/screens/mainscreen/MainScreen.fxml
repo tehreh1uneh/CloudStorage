@@ -11,9 +11,9 @@
         <MenuBar>
             <Menu text="Меню">
                 <MenuItem mnemonicParsing="false" onAction="#onActionLogOut" text="Сменить пользователя"/>
-                <MenuItem onAction="#onActionExit" text="Выход">
+                <MenuItem onAction="#onActionExit" text="Выход"/>
+                <MenuItem onAction="#sendFiles" text="Загрузить файл"/>
 
-                </MenuItem>
 
             </Menu>
             <Menu text="Помощь">

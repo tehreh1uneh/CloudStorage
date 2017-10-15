@@ -1,5 +1,7 @@
 package com.tehreh1uneh.cloudstorage.common;
 
+import com.tehreh1uneh.cloudstorage.common.messages.Message;
+
 import java.net.Socket;
 
 public interface SocketThreadListener {
@@ -10,7 +12,7 @@ public interface SocketThreadListener {
 
     void onReadySocketThread(SocketThread socketThread, Socket socket);
 
-    void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, byte[] value);
+    void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message value);
 
     void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e);
 }
