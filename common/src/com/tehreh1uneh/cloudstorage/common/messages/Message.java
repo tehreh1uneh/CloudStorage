@@ -7,7 +7,7 @@ public class Message implements Serializable {
     @SuppressWarnings("WeakerAccess")
     protected MessageType type;
 
-    public Message(MessageType type) {
+    protected Message(MessageType type) {
         this.type = type;
     }
 

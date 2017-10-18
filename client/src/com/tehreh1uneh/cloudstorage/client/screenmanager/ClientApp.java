@@ -4,10 +4,7 @@ import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
-import com.tehreh1uneh.cloudstorage.common.messages.AuthRequestMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.AuthResponseMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.Message;
-import com.tehreh1uneh.cloudstorage.common.messages.MessageType;
+import com.tehreh1uneh.cloudstorage.common.messages.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -47,7 +44,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             replaceSceneContent("/com/tehreh1uneh/cloudstorage/client/screens/authscreen/AuthScreen.fxml");
 
             stage.setOnCloseRequest(windowEvent -> {
-                disconnect();
+                disconnect(true);
                 System.exit(0);
             });
 
@@ -119,12 +116,15 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         logger.info("Получено сообщение с сервера");
         if (message.getType() == MessageType.AUTH_RESPONSE) {
             handleAuthorizeResponse((AuthResponseMessage) message);
+        } else if (message.getType() == MessageType.ERROR) {
+            handleErrorMessage((ErrorMessage) message);
         }
     }
 
     @Override
     public void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e) {
-        throw new RuntimeException("Ошибка в клиентском SocketThread");
+        logger.fatal("Ошибка в  SocketThread: ", e);
+        throw new RuntimeException();
     }
     //endregion
 
@@ -136,8 +136,16 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         } else {
             // TODO popup
             logger.info("Запрос авторизации отклонен сервером");
-            disconnect();
+            disconnect(false);
             ((AuthScreen) screen).unblock();
+        }
+    }
+
+    private void handleErrorMessage(ErrorMessage message) {
+        // TODO info window
+        logger.error("Ошибка на сервере: " + message.getDescrition());
+        if (message.isDisconnect()) {
+            disconnect(false);
         }
     }
 
@@ -153,17 +161,19 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
-    private void disconnect() {
+    private void disconnect(boolean notifyServer) {
         if (socketThread != null && socketThread.isAlive()) {
-            socketThread.send(new Message(MessageType.DISCONNECT));
-            logger.info("Серверу отправлен запрос на отключение");
-            socketThread.close();
+            if (notifyServer) {
+//                socketThread.send(new DisconnectMessage());
+                logger.info("Серверу отправлен запрос на отключение");
+            }
+            socketThread.interrupt();
             logger.info("Соединение с сервером разорвано");
         }
     }
 
     public void logOut() {
-        disconnect();
+        disconnect(true);
         setAuthScreen();
     }
 

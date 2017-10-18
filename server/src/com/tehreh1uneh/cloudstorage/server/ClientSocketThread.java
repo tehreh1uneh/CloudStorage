@@ -7,10 +7,28 @@ import java.net.Socket;
 
 class ClientSocketThread extends SocketThread {
 
+    private String login;
+    private String path;
     private boolean authorized = false;
 
     ClientSocketThread(SocketThreadListener eventListener, String name, Socket socket) {
         super(eventListener, name, socket);
+    }
+
+    String getPath() {
+        return path;
+    }
+
+    void setPath(String path) {
+        this.path = path;
+    }
+
+    String getLogin() {
+        return login;
+    }
+
+    void setLogin(String login) {
+        this.login = login;
     }
 
     boolean isAuthorized() {

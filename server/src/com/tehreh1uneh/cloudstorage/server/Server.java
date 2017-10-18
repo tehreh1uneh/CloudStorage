@@ -13,7 +13,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static com.tehreh1uneh.cloudstorage.server.Config.STORAGE_PATH;
 
 public class Server implements ServerSocketThreadListener, SocketThreadListener {
 
@@ -51,37 +54,63 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     private void handleAuthorizedClient(ClientSocketThread client, Message message) {
         if (message.getType() == MessageType.DISCONNECT) {
-            client.close();
+            disconnectClient(client);
         } else if (message.getType() == MessageType.FILE) {
-            handleFileMessage((FileMessage) message);
+            handleFileMessage((FileMessage) message, client);
         }
     }
 
     private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {
-
+        // TODO authorized clients - client thread map
         if (message.getType() == MessageType.AUTH_REQUEST) {
             AuthRequestMessage authRequestMessage = (AuthRequestMessage) message;
             client.setAuthorized(authorizeManager.authorize(authRequestMessage.getLogin(), authRequestMessage.getPassword()));
+
             AuthResponseMessage response = new AuthResponseMessage(client.isAuthorized(), client.isAuthorized() ? "" : "Неверный логин или пароль");
             client.send(response);
-        }
 
-        if (!client.isAuthorized()) {
-            client.close();
-            logger.info("Ошибка авторизации клиента: " + socket.toString());
-        } else {
-            logger.info("Клиент успешно авторизован: " + socket.toString());
+            if (!client.isAuthorized()) {
+                logger.info("Ошибка авторизации клиента: " + socket.toString());
+                disconnectClient(client);
+            } else {
+                client.setLogin(authRequestMessage.getLogin());
+
+                try {
+                    createUserPath(client);
+                } catch (IOException e) {
+                    String errorMessage = "Не удалось создать папку для хранения данных пользователя";
+                    logger.error(errorMessage, e);
+                    client.send(new ErrorMessage(errorMessage, true));
+                    disconnectClient(client);
+                    return;
+                }
+                logger.info("Клиент успешно авторизован: " + socket.toString());
+            }
         }
     }
 
-    private void handleFileMessage(FileMessage message) {
+    private void disconnectClient(SocketThread clientThread) {
+        if (clientThread != null && clientThread.isAlive()) {
+            clientThread.interrupt();
+        }
+    }
+
+    private void createUserPath(ClientSocketThread client) throws IOException {
+        client.setPath(STORAGE_PATH + client.getLogin() + '/');
+        Path path = Paths.get(client.getPath());
+        if (Files.notExists(path)) {
+            Files.createDirectory(path);
+        }
+    }
+
+    private void handleFileMessage(FileMessage message, ClientSocketThread client) {
         try {
-            Files.write(Paths.get("C:/Users/eurythmic/Desktop/123/" + message.getName()), message.getBytes());
+            Files.write(Paths.get(client.getPath() + message.getName()), message.getBytes());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            logger.error("Пользователь: " + client.getLogin() + ". Ошибка сохранения файла");
+            client.send(new ErrorMessage("Не удалось сохранить файл", false));
         }
     }
-
 
     //region ServerSocketThread
     @Override
