@@ -9,12 +9,15 @@ import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
 import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import static com.tehreh1uneh.cloudstorage.server.Config.STORAGE_PATH;
 
@@ -77,6 +80,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
                 try {
                     createUserPath(client);
+                    sendFilesList(client);
                 } catch (IOException e) {
                     String errorMessage = "Не удалось создать папку для хранения данных пользователя";
                     logger.error(errorMessage, e);
@@ -110,6 +114,27 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             logger.error("Пользователь: " + client.getLogin() + ". Ошибка сохранения файла");
             client.send(new ErrorMessage("Не удалось сохранить файл", false));
         }
+    }
+
+    private synchronized void sendFilesList(ClientSocketThread client) {
+
+        ArrayList<File> filesList = new ArrayList<>();
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(client.getPath()))) {
+            for (Path entry : stream) {
+                if (!Files.isDirectory(entry)) {
+                    filesList.add(new File(entry.toUri()));
+                }
+            }
+        } catch (IOException e) {
+            String errorMessage = "Ошибка чтения списка файлов.";
+            logger.error(errorMessage, e);
+            client.send(new ErrorMessage(errorMessage, true));
+            disconnectClient(client);
+            return;
+        }
+
+        client.send(new FilesListMessage(filesList));
     }
 
     //region ServerSocketThread

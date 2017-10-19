@@ -14,8 +14,10 @@ import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_IP;
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_PORT;
@@ -118,6 +120,8 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             handleAuthorizeResponse((AuthResponseMessage) message);
         } else if (message.getType() == MessageType.ERROR) {
             handleErrorMessage((ErrorMessage) message);
+        } else if (message.getType() == MessageType.FILES_LIST) {
+            handleFilesList((FilesListMessage) message);
         }
     }
 
@@ -149,6 +153,16 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
+    private void handleFilesList(FilesListMessage message) {
+
+        ArrayList<File> files = message.getFilesList();
+
+        for (File file : files) {
+            System.out.println(file.getName());
+        }
+
+    }
+
     public void connect() {
         try {
             Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
@@ -164,6 +178,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     private void disconnect(boolean notifyServer) {
         if (socketThread != null && socketThread.isAlive()) {
             if (notifyServer) {
+                // TODO fix error
 //                socketThread.send(new DisconnectMessage());
                 logger.info("Серверу отправлен запрос на отключение");
             }
