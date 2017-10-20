@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_IP;
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_PORT;
 
+// TODO create observers for screens
+
 public class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private static final Logger logger = Logger.getLogger(ClientApp.class);
@@ -133,6 +135,12 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     }
     //endregion
 
+    public void send(Message message) {
+        socketThread.send(message);
+    }
+
+    //region MessageHandlers
+
     private void handleAuthorizeResponse(AuthResponseMessage message) {
         if (message.isAuthorized()) {
             logger.info("Клиент успешно авторизован на сервере");
@@ -162,6 +170,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             mainScreen.fillTable(files);
         }
     }
+    //endregion
 
     public void connect() {
         try {
@@ -173,6 +182,11 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             logger.info("Не удалось установить соединение с сервером", e);
             ((AuthScreen) screen).unblock();
         }
+    }
+
+    public void logOut() {
+        disconnect(true);
+        setAuthScreen();
     }
 
     private void disconnect(boolean notifyServer) {
@@ -187,20 +201,10 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
-    public void logOut() {
-        disconnect(true);
-        setAuthScreen();
-    }
-
     @Override
     public void uncaughtException(Thread thread, Throwable e) {
         logger.fatal("Ошибка клиентского приложения", e);
         JOptionPane.showMessageDialog(null, "Возникла непредвиденная ошибка, приложение будет закрыто.", "Ошибка:", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
-
-    public void send(Message message) {
-        socketThread.send(message);
-    }
-
 }

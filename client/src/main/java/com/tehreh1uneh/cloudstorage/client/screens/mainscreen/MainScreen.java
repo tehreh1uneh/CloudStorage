@@ -2,9 +2,14 @@ package com.tehreh1uneh.cloudstorage.client.screens.mainscreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import com.tehreh1uneh.cloudstorage.common.messages.FileMessage;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
 
@@ -14,14 +19,27 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.TimeZone;
 
 public final class MainScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(MainScreen.class);
-    private FilesTableData filesTableData;
+    @FXML
+    TableColumn<TableRowData, String> colType;
+    @FXML
+    TableColumn<TableRowData, String> colSize;
+    @FXML
+    TableView tableFiles;
+    @FXML
+    private TableColumn<TableRowData, String> colFileName;
+    @FXML
+    private TableColumn<TableRowData, LocalDateTime> colModified;
+    private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
 
     @FXML
     private void onActionSourceCode() {
@@ -49,6 +67,12 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+
+        colFileName.setCellValueFactory(new PropertyValueFactory<>("fileName"));
+        colModified.setCellValueFactory(new PropertyValueFactory<>("modified"));
+        colType.setCellValueFactory(new PropertyValueFactory<>("type"));
+        colSize.setCellValueFactory(new PropertyValueFactory<>("size"));
+
         logger.info("Инициалищация основного экрана успешно завершена");
     }
 
@@ -72,7 +96,35 @@ public final class MainScreen extends BaseScreen implements Initializable {
     }
 
     public void fillTable(ArrayList<File> files) {
+        tableData.clear();
 
+        for (int i = 0; i < files.size(); i++) {
+
+            File file = files.get(i);
+
+            tableData.add(new TableRowData(file.getName(),
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId()),
+                    "some type", byteSizeToString(file.length())));
+        }
+
+        tableFiles.setItems(tableData);
     }
+
+    private String byteSizeToString(long length) {
+        if (length < 1024) {
+            return Long.toString(length) + " байт";
+        } else if (length < 1024 * 1024) {
+            long left = length / 1024;
+            int right = (int) ((double) (length % 1024) / 1024 * 100);
+
+            return Long.toString(left) + "." + Integer.toString(right) + " КБ";
+        } else {
+            long left = length / (1024 * 1024);
+            int right = (int) ((double) (length % (1024 * 1024)) / (1024 * 1024) * 100);
+
+            return Long.toString(left) + "." + Integer.toString(right) + " МБ";
+        }
+    }
+
 
 }

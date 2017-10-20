@@ -2,14 +2,14 @@ package com.tehreh1uneh.cloudstorage.client.screens.mainscreen;
 
 import java.time.LocalDateTime;
 
-public class FilesTableData {
+public class TableRowData {
 
     private String fileName;
     private LocalDateTime modified;
     private String type;
-    private double size;
+    private String size;
 
-    public FilesTableData(String fileName, LocalDateTime modified, String type, double size) {
+    public TableRowData(String fileName, LocalDateTime modified, String type, String size) {
         this.fileName = fileName;
         this.modified = modified;
         this.type = type;
@@ -40,11 +40,11 @@ public class FilesTableData {
         this.type = type;
     }
 
-    public double getSize() {
+    public String getSize() {
         return size;
     }
 
-    public void setSize(double size) {
+    public void setSize(String size) {
         this.size = size;
     }
 }
