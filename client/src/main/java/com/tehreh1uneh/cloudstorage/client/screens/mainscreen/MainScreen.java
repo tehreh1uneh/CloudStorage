@@ -19,12 +19,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.time.Instant;
-import java.time.LocalDateTime;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.TimeZone;
 
 public final class MainScreen extends BaseScreen implements Initializable {
 
@@ -38,8 +36,10 @@ public final class MainScreen extends BaseScreen implements Initializable {
     @FXML
     private TableColumn<TableRowData, String> colFileName;
     @FXML
-    private TableColumn<TableRowData, LocalDateTime> colModified;
+    private TableColumn<TableRowData, String> colModified;
     private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
+
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     @FXML
     private void onActionSourceCode() {
@@ -102,9 +102,11 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
             File file = files.get(i);
 
-            tableData.add(new TableRowData(file.getName(),
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), TimeZone.getDefault().toZoneId()),
-                    "some type", byteSizeToString(file.length())));
+            tableData.add(new TableRowData(
+                    fileNameWithoutExt(file.getName()),
+                    dateFormat.format(file.lastModified()),
+                    fileExt(file.getName()),
+                    byteSizeToString(file.length())));
         }
 
         tableFiles.setItems(tableData);
@@ -124,6 +126,23 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
             return Long.toString(left) + "." + Integer.toString(right) + " МБ";
         }
+    }
+
+    private String fileExt(String fileName) {
+        if (fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
+            return fileName.substring(fileName.lastIndexOf(".") + 1);
+        } else {
+            return "";
+        }
+    }
+
+    private String fileNameWithoutExt(String fileName) {
+        if (fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
+            return fileName.substring(0, fileName.lastIndexOf("."));
+        } else {
+            return fileName;
+        }
+
     }
 
 

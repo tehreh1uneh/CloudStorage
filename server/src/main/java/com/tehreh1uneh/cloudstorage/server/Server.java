@@ -109,7 +109,9 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     private void handleFileMessage(FileMessage message, ClientSocketThread client) {
         try {
+            // TODO check file name collisions
             Files.write(Paths.get(client.getPath() + message.getName()), message.getBytes());
+            sendFilesList(client);
         } catch (IOException e) {
             logger.error("Пользователь: " + client.getLogin() + ". Ошибка сохранения файла");
             client.send(new ErrorMessage("Не удалось сохранить файл", false));

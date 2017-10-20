@@ -4,6 +4,7 @@ import com.tehreh1uneh.cloudstorage.servergui.screenmanager.ServerApp;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Hyperlink;
+import javafx.scene.control.TextArea;
 import org.apache.log4j.Logger;
 
 import java.awt.*;
@@ -20,6 +21,8 @@ public final class MainScreen implements Initializable {
     @FXML
     public Hyperlink sourceCodeLink;
     private ServerApp serverApp;
+    @FXML
+    private TextArea logArea;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -56,5 +59,9 @@ public final class MainScreen implements Initializable {
             sourceCodeLink.setText(url);
             logger.info("Ссылка на исходный код не может быть открыта. Desktop is not supported");
         }
+    }
+
+    public void writeLog(String msg) {
+        logArea.appendText(msg + '\n');
     }
 }

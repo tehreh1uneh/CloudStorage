@@ -1,15 +1,13 @@
 package com.tehreh1uneh.cloudstorage.client.screens.mainscreen;
 
-import java.time.LocalDateTime;
-
 public class TableRowData {
 
     private String fileName;
-    private LocalDateTime modified;
+    private String modified;
     private String type;
     private String size;
 
-    public TableRowData(String fileName, LocalDateTime modified, String type, String size) {
+    public TableRowData(String fileName, String modified, String type, String size) {
         this.fileName = fileName;
         this.modified = modified;
         this.type = type;
@@ -24,11 +22,11 @@ public class TableRowData {
         this.fileName = fileName;
     }
 
-    public LocalDateTime getModified() {
+    public String getModified() {
         return modified;
     }
 
-    public void setModified(LocalDateTime modified) {
+    public void setModified(String modified) {
         this.modified = modified;
     }
 
