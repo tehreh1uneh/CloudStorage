@@ -6,12 +6,12 @@ import com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthReq;
-import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResp;
+import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResponseMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileResp;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FilesListResp;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FileMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FilesListResponse;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -20,7 +20,6 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
@@ -128,11 +127,14 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         if (socketThread != null && socketThread.isAlive()) {
             if (notifyServer) {
                 // TODO fix error
-//                socketThread.send(new DisconnectMessage());
+//                socketThread.send(new DisconnectMessage("Откдючение клиента"));
                 logger.info("Серверу отправлен запрос на отключение");
             }
             socketThread.interrupt();
             logger.info("Соединение с сервером разорвано");
+            if (!(screen instanceof AuthScreen)) {
+                Platform.runLater(this::setAuthScreen);
+            }
         }
     }
 
@@ -154,25 +156,25 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     public void onReadySocketThread(SocketThread socketThread, Socket socket) {
         logger.info("Клиентский SocketThread  готов к работе");
         AuthScreen authScreen = (AuthScreen) screen;
-        socketThread.send(new AuthReq(authScreen.getLogin(), authScreen.getPassword()));
+        socketThread.send(new AuthRequestMessage(authScreen.getLogin(), authScreen.getPassword()));
         logger.info("Отправлен запрос авторизации на сервер");
     }
 
     @Override
     public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
         logger.info("Получено сообщение с сервера");
-        if (message.getType() == MessageType.AUTH_RESP) {
-            logger.info("Тип сообщения: AUTH_RESP");
-            handleAuthorizeResponse((AuthResp) message);
+        if (message.getType() == MessageType.AUTH_RESPONSE) {
+            logger.info("Тип сообщения: AUTH_RESPONSE");
+            handleAuthorizeResponse((AuthResponseMessage) message);
         } else if (message.getType() == MessageType.ERROR) {
             logger.info("Тип сообщения: ERROR");
             handleErrorMessage((ErrorMessage) message);
-        } else if (message.getType() == MessageType.FILES_LIST_RESP) {
-            logger.info("Тип сообщения: FILES_LIST_RESP");
-            handleFilesList((FilesListResp) message);
-        } else if (message.getType() == MessageType.FILE_RESP) {
-            logger.info("Тип сообщения: FILE_RESP");
-            handleFileMessage((FileResp) message);
+        } else if (message.getType() == MessageType.FILES_LIST_RESPONSE) {
+            logger.info("Тип сообщения: FILES_LIST_RESPONSE");
+            handleFilesList((FilesListResponse) message);
+        } else if (message.getType() == MessageType.FILE) {
+            logger.info("Тип сообщения: FILE");
+            handleFileMessage((FileMessage) message);
         } else {
             logger.fatal("Необрабатываемый тип сообщения: " + message.getType());
             throw new RuntimeException();
@@ -192,7 +194,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     //region MessageHandlers
 
-    private void handleAuthorizeResponse(AuthResp message) {
+    private void handleAuthorizeResponse(AuthResponseMessage message) {
         if (message.isAuthorized()) {
             logger.info("Клиент успешно авторизован на сервере");
             ((AuthScreen) screen).unblock();
@@ -213,23 +215,33 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
-    private void handleFilesList(FilesListResp message) {
+    private void handleFilesList(FilesListResponse message) {
 
         ArrayList<File> files = message.getFilesList();
         if (screen instanceof MainScreen) {
             MainScreen mainScreen = (MainScreen) screen;
             mainScreen.fillTable(files);
+            mainScreen.unbloclAllButtons();
+
+            Platform.runLater(() -> mainScreen.setProgressIndicatorActivity(false, ""));
         }
     }
 
-    private void handleFileMessage(FileResp message) {
+    private void handleFileMessage(FileMessage message) {
         try {
             // TODO check file name collisions
             Path savePath = Paths.get(STORAGE_PATH);
             if (Files.notExists(savePath)) {
-                Files.createDirectory(savePath);
+                Files.createDirectories(savePath);
             }
             Files.write(Paths.get(STORAGE_PATH + message.getName()), message.getBytes());
+
+            if (screen instanceof MainScreen) {
+                MainScreen mainScreen = (MainScreen) screen;
+                mainScreen.unbloclAllButtons();
+                Platform.runLater(() -> mainScreen.setProgressIndicatorActivity(false, ""));
+            }
+
         } catch (IOException e) {
             // TODO popup
             logger.error("Ошибка сохранения файла", e);
@@ -241,7 +253,6 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     @Override
     public void uncaughtException(Thread thread, Throwable e) {
         logger.fatal("Ошибка клиентского приложения", e);
-        JOptionPane.showMessageDialog(null, "Возникла непредвиденная ошибка, приложение будет закрыто.", "Ошибка:", JOptionPane.ERROR_MESSAGE);
         System.exit(1);
     }
 }

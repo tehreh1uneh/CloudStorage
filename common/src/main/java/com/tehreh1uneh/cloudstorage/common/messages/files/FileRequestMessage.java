@@ -3,12 +3,12 @@ package com.tehreh1uneh.cloudstorage.common.messages.files;
 import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 
-public class FileReq extends Message {
+public class FileRequestMessage extends Message {
 
     private String fileName;
 
-    public FileReq(String fileName) {
-        super(MessageType.FILE_REQ);
+    public FileRequestMessage(String fileName) {
+        super(MessageType.FILE_REQUEST);
         this.fileName = fileName;
 
     }

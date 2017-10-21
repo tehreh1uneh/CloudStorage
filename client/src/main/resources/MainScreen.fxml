@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="600.0"
             xmlns="http://javafx.com/javafx/8.0.121"
             fx:controller="com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen">
@@ -10,12 +10,10 @@
     <top>
         <MenuBar>
             <Menu text="Меню">
-                <MenuItem onAction="#sendFiles" text="Загрузить файл"/>
                 <MenuItem mnemonicParsing="false" onAction="#onActionLogOut" text="Сменить пользователя"/>
                 <MenuItem onAction="#onActionExit" text="Выход"/>
-
-
             </Menu>
+
             <Menu text="Помощь">
                 <MenuItem onAction="#onActionSourceCode" text="Исходный код"/>
             </Menu>
@@ -23,7 +21,7 @@
     </top>
 
     <center>
-        <TableView fx:id="tableFiles" onMouseClicked="#onTableMouseClick" onKeyPressed="#onTableKeyPressed"
+        <TableView fx:id="tableFiles" onKeyPressed="#onTableKeyPressed" onMouseClicked="#onTableMouseClick"
                    BorderPane.alignment="CENTER">
             <columns>
                 <TableColumn fx:id="colFileName" text="Имя файла"/>
@@ -35,7 +33,6 @@
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
             </columnResizePolicy>
         </TableView>
-
     </center>
 
     <bottom>
@@ -43,8 +40,7 @@
             <columnConstraints>
                 <ColumnConstraints percentWidth="1"/>
                 <ColumnConstraints percentWidth="5"/>
-                <ColumnConstraints percentWidth="60"/>
-                <ColumnConstraints percentWidth="35"/>
+                <ColumnConstraints percentWidth="95"/>
                 <ColumnConstraints percentWidth="1"/>
             </columnConstraints>
             <rowConstraints>
@@ -53,15 +49,57 @@
                 <RowConstraints percentHeight="5.0"/>
             </rowConstraints>
 
-            <ProgressIndicator visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-            <ProgressBar progress="0.0" visible="false" GridPane.columnIndex="3" GridPane.halignment="RIGHT"
-                         GridPane.rowIndex="1"/>
-            <Button mnemonicParsing="false" onAction="#onActionSync" text="Синхронизировать" GridPane.columnIndex="2">
-                <font>
-                    <Font name="Monaco Plain:001.001" size="10.0"/>
-                </font>
-            </Button>
-            <Label textFill="#9a9696" GridPane.columnIndex="2" GridPane.rowIndex="1">
+            <ProgressIndicator fx:id="progressIndicator" visible="false" GridPane.columnIndex="1"
+                               GridPane.rowIndex="1"/>
+
+            <HBox GridPane.columnIndex="2">
+                <children>
+                    <Button fx:id="buttonUpload" onAction="#sendFiles" text="Загрузить" textAlignment="CENTER">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Button>
+
+                    <Label text=" ">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Label>
+
+                    <Button fx:id="buttonDownload" onAction="#onActionButtonDownload" text="Скачать"
+                            textAlignment="CENTER">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Button>
+
+                    <Label text=" ">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Label>
+
+                    <Button fx:id="buttonDelete" onAction="#onActionButtonDelete" text="Удалить" textAlignment="CENTER">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Button>
+
+                    <Label text=" ">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Label>
+
+                    <Button fx:id="buttonRename" onAction="#onActionButtonRename" text="Переименовать"
+                            textAlignment="CENTER">
+                        <font>
+                            <Font name="Monaco Plain:001.001" size="10.0"/>
+                        </font>
+                    </Button>
+                </children>
+            </HBox>
+            <Label fx:id="progressLabel" textFill="#9a9696" GridPane.columnIndex="2" GridPane.rowIndex="1">
                 <font>
                     <Font name="Monaco Plain:001.001" size="9.0"/>
                 </font>

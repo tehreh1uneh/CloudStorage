@@ -32,7 +32,6 @@ public class TableRowData {
     TableRowData(File file) {
         this.file = file;
 
-
         this.fileName = fileNameWithoutExt(file.getName());
         this.modified = dateFormat.format(file.lastModified());
         this.type = fileExt(file.getName());

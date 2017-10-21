@@ -5,19 +5,15 @@ import com.tehreh1uneh.cloudstorage.common.ServerSocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthReq;
-import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResp;
+import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResponseMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileDel;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileReq;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileResp;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FilesListResp;
+import com.tehreh1uneh.cloudstorage.common.messages.files.*;
 import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -25,6 +21,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 
+import static com.tehreh1uneh.cloudstorage.server.Config.FILE_SEPARATOR;
 import static com.tehreh1uneh.cloudstorage.server.Config.STORAGE_PATH;
 
 public class Server implements ServerSocketThreadListener, SocketThreadListener {
@@ -63,14 +60,16 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private void handleAuthorizedClient(ClientSocketThread client, Message message) {
         if (message.getType() == MessageType.DISCONNECT) {
             disconnectClient(client);
-        } else if (message.getType() == MessageType.FILE_RESP) {
-            handleFileMessage((FileResp) message, client);
-        } else if (message.getType() == MessageType.FILE_REQ) {
-            handleFileRequest((FileReq) message, client);
-        } else if (message.getType() == MessageType.FILES_LIST_REQ) {
+        } else if (message.getType() == MessageType.FILE) {
+            handleFileMessage((FileMessage) message, client);
+        } else if (message.getType() == MessageType.FILE_REQUEST) {
+            handleFileRequest((FileRequestMessage) message, client);
+        } else if (message.getType() == MessageType.FILES_LIST_REQUEST) {
             sendFilesList(client);
-        } else if (message.getType() == MessageType.FILE_DEL) {
-            deleteFile(client, (FileDel) message);
+        } else if (message.getType() == MessageType.FILE_DELETE) {
+            deleteFile(client, (FileDeleteMessage) message);
+        } else if (message.getType() == MessageType.FILE_RENAME) {
+            renameFile(client, (FileRenameMessage) message);
         } else {
             logger.fatal("Необрабатываемый тип сообщения: " + message.getType());
             throw new RuntimeException();
@@ -79,18 +78,18 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {
         // TODO authorized clients - client thread map
-        if (message.getType() == MessageType.AUTH_REQ) {
-            AuthReq authReq = (AuthReq) message;
-            client.setAuthorized(authorizeManager.authorize(authReq.getLogin(), authReq.getPassword()));
+        if (message.getType() == MessageType.AUTH_REQUEST) {
+            AuthRequestMessage authRequestMessage = (AuthRequestMessage) message;
+            client.setAuthorized(authorizeManager.authorize(authRequestMessage.getLogin(), authRequestMessage.getPassword()));
 
-            AuthResp response = new AuthResp(client.isAuthorized(), client.isAuthorized() ? "" : "Неверный логин или пароль");
+            AuthResponseMessage response = new AuthResponseMessage(client.isAuthorized(), client.isAuthorized() ? "" : "Неверный логин или пароль");
             client.send(response);
 
             if (!client.isAuthorized()) {
                 logger.info("Ошибка авторизации клиента: " + socket.toString());
                 disconnectClient(client);
             } else {
-                client.setLogin(authReq.getLogin());
+                client.setLogin(authRequestMessage.getLogin());
 
                 try {
                     createUserPath(client);
@@ -117,14 +116,14 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void createUserPath(ClientSocketThread client) throws IOException {
-        client.setPath(STORAGE_PATH + client.getLogin() + '/');
+        client.setPath(STORAGE_PATH + client.getLogin() + FILE_SEPARATOR);
         Path path = Paths.get(client.getPath());
         if (Files.notExists(path)) {
-            Files.createDirectory(path);
+            Files.createDirectories(path);
         }
     }
 
-    private void handleFileMessage(FileResp message, ClientSocketThread client) {
+    private void handleFileMessage(FileMessage message, ClientSocketThread client) {
         try {
             // TODO check file name collisions
             Files.write(Paths.get(client.getPath() + message.getName()), message.getBytes());
@@ -135,10 +134,10 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
     }
 
-    private void handleFileRequest(FileReq message, ClientSocketThread client) {
+    private void handleFileRequest(FileRequestMessage message, ClientSocketThread client) {
 
         try {
-            ArrayList<File> files = new ArrayList<>();
+            ArrayList<java.io.File> files = new ArrayList<>();
             String fileName = message.getFileName();
 
             Files.walkFileTree(Paths.get(STORAGE_PATH), new SimpleFileVisitor<>() {
@@ -146,22 +145,22 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (!attrs.isDirectory()) {
                         if (file.getFileName().toString().equals(fileName)) {
-                            files.add(new File(file.toUri()));
+                            files.add(new java.io.File(file.toUri()));
                         }
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
 
-            for (File file : files) {
-                client.send(new FileResp(file));
+            for (java.io.File file : files) {
+                client.send(new FileMessage(file));
             }
         } catch (IOException e) {
             logger.warn("Запрошенный файл (" + message.getFileName() + ") не найден на сервере.", e);
         }
     }
 
-    private void deleteFile(ClientSocketThread client, FileDel message) {
+    private void deleteFile(ClientSocketThread client, FileDeleteMessage message) {
         Path path = Paths.get(client.getPath() + message.getFileName());
         if (Files.exists(path)) {
             try {
@@ -173,14 +172,20 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
     }
 
+    private void renameFile(ClientSocketThread client, FileRenameMessage message) {
+        Path oldPath = Paths.get(client.getPath() + message.getOldName());
+        Path newPath = Paths.get(client.getPath() + message.getNewName());
+        if (Files.exists(oldPath) && oldPath.toFile().renameTo(newPath.toFile())) sendFilesList(client);
+    }
+
     private synchronized void sendFilesList(ClientSocketThread client) {
 
-        ArrayList<File> filesList = new ArrayList<>();
+        ArrayList<java.io.File> filesList = new ArrayList<>();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(client.getPath()))) {
             for (Path entry : stream) {
                 if (!Files.isDirectory(entry)) {
-                    filesList.add(new File(entry.toUri()));
+                    filesList.add(new java.io.File(entry.toUri()));
                 }
             }
         } catch (IOException e) {
@@ -191,7 +196,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             return;
         }
 
-        client.send(new FilesListResp(filesList));
+        client.send(new FilesListResponse(filesList));
     }
 
     //region ServerSocketThread

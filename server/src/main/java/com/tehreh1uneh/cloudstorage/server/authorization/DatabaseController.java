@@ -40,7 +40,6 @@ public final class DatabaseController implements AuthorizeManager {
     @Override
     public void dispose() {
         try {
-            authQuery.close();
             connection.close();
         } catch (SQLException e) {
             logger.fatal("Ошибка при выгрузке ресурсов менеджера СУБД", e);

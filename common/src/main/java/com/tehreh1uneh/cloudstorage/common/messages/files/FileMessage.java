@@ -7,14 +7,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class FileResp extends Message {
+public class FileMessage extends Message {
 
     private final String name;
     private final long length;
     private final byte[] bytes;
 
-    public FileResp(File file) {
-        super(MessageType.FILE_RESP);
+    public FileMessage(File file) {
+        super(MessageType.FILE);
         name = file.getName();
         length = file.length();
         try {

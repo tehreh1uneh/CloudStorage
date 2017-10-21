@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<GridPane xmlns:fx="http://javafx.com/fxml/1" stylesheets="notificationStyles.css"
+          fx:controller="com.tehreh1uneh.cloudstorage.common.notification.Notification"
+          xmlns="http://javafx.com/javafx/8.0.121">
+
+    <columnConstraints>
+        <ColumnConstraints percentWidth="10"/>
+        <ColumnConstraints percentWidth="80"/>
+        <ColumnConstraints percentWidth="10"/>
+    </columnConstraints>
+
+    <rowConstraints>
+        <RowConstraints percentHeight="10"/>
+        <RowConstraints percentHeight="80"/>
+        <RowConstraints percentHeight="10"/>
+    </rowConstraints>
+
+    <Label styleClass="background" fx:id="messageLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+    <Label styleClass="background" text="ЗАГОЛОВОК" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+</GridPane>

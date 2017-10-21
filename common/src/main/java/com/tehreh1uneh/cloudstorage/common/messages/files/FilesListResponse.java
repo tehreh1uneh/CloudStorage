@@ -6,12 +6,12 @@ import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 import java.io.File;
 import java.util.ArrayList;
 
-public class FilesListResp extends Message {
+public class FilesListResponse extends Message {
 
     private ArrayList<File> filesList;
 
-    public FilesListResp(ArrayList<File> filesList) {
-        super(MessageType.FILES_LIST_RESP);
+    public FilesListResponse(ArrayList<File> filesList) {
+        super(MessageType.FILES_LIST_RESPONSE);
         this.filesList = filesList;
     }
 
