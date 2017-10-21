@@ -5,7 +5,13 @@ import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
-import com.tehreh1uneh.cloudstorage.common.messages.*;
+import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthReq;
+import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResp;
+import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
+import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FileResp;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FilesListResp;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -18,16 +24,21 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_IP;
-import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.DEFAULT_PORT;
+import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.*;
 
-// TODO create observers for screens
+// TODO create ?observers for screens
 
 public class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private static final Logger logger = Logger.getLogger(ClientApp.class);
+
+    //region Screens
+
     private Stage stage;
     private SocketThread socketThread;
     private BaseScreen screen;
@@ -96,82 +107,6 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         screen.setClientApp(this);
     }
 
-    //region SocketThread
-
-    @Override
-    public void onStartSocketThread(SocketThread socketThread) {
-        logger.info("Клиентский SocketThread запушен");
-    }
-
-    @Override
-    public void onStopSocketThread(SocketThread socketThread) {
-        logger.info("Клиентский SocketThread  остановлен");
-    }
-
-    @Override
-    public void onReadySocketThread(SocketThread socketThread, Socket socket) {
-        logger.info("Клиентский SocketThread  готов к работе");
-        AuthScreen authScreen = (AuthScreen) screen;
-        socketThread.send(new AuthRequestMessage(authScreen.getLogin(), authScreen.getPassword()));
-        logger.info("Отправлен запрос авторизации на сервер");
-    }
-
-    @Override
-    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
-        logger.info("Получено сообщение с сервера");
-        if (message.getType() == MessageType.AUTH_RESPONSE) {
-            handleAuthorizeResponse((AuthResponseMessage) message);
-        } else if (message.getType() == MessageType.ERROR) {
-            handleErrorMessage((ErrorMessage) message);
-        } else if (message.getType() == MessageType.FILES_LIST) {
-            handleFilesList((FilesListMessage) message);
-        }
-    }
-
-    @Override
-    public void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e) {
-        logger.fatal("Ошибка в  SocketThread: ", e);
-        throw new RuntimeException();
-    }
-    //endregion
-
-    public void send(Message message) {
-        socketThread.send(message);
-    }
-
-    //region MessageHandlers
-
-    private void handleAuthorizeResponse(AuthResponseMessage message) {
-        if (message.isAuthorized()) {
-            logger.info("Клиент успешно авторизован на сервере");
-            ((AuthScreen) screen).unblock();
-            setMainScreen();
-        } else {
-            // TODO popup
-            logger.info("Запрос авторизации отклонен сервером");
-            disconnect(false);
-            ((AuthScreen) screen).unblock();
-        }
-    }
-
-    private void handleErrorMessage(ErrorMessage message) {
-        // TODO info window
-        logger.error("Ошибка на сервере: " + message.getDescrition());
-        if (message.isDisconnect()) {
-            disconnect(false);
-        }
-    }
-
-    private void handleFilesList(FilesListMessage message) {
-
-        ArrayList<File> files = message.getFilesList();
-        if (screen instanceof MainScreen) {
-            MainScreen mainScreen = (MainScreen) screen;
-            mainScreen.fillTable(files);
-        }
-    }
-    //endregion
-
     public void connect() {
         try {
             Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
@@ -200,6 +135,108 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             logger.info("Соединение с сервером разорвано");
         }
     }
+
+    //endregion
+
+    //region SocketThread
+
+    @Override
+    public void onStartSocketThread(SocketThread socketThread) {
+        logger.info("Клиентский SocketThread запушен");
+    }
+
+    @Override
+    public void onStopSocketThread(SocketThread socketThread) {
+        logger.info("Клиентский SocketThread  остановлен");
+    }
+
+    @Override
+    public void onReadySocketThread(SocketThread socketThread, Socket socket) {
+        logger.info("Клиентский SocketThread  готов к работе");
+        AuthScreen authScreen = (AuthScreen) screen;
+        socketThread.send(new AuthReq(authScreen.getLogin(), authScreen.getPassword()));
+        logger.info("Отправлен запрос авторизации на сервер");
+    }
+
+    @Override
+    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
+        logger.info("Получено сообщение с сервера");
+        if (message.getType() == MessageType.AUTH_RESP) {
+            logger.info("Тип сообщения: AUTH_RESP");
+            handleAuthorizeResponse((AuthResp) message);
+        } else if (message.getType() == MessageType.ERROR) {
+            logger.info("Тип сообщения: ERROR");
+            handleErrorMessage((ErrorMessage) message);
+        } else if (message.getType() == MessageType.FILES_LIST_RESP) {
+            logger.info("Тип сообщения: FILES_LIST_RESP");
+            handleFilesList((FilesListResp) message);
+        } else if (message.getType() == MessageType.FILE_RESP) {
+            logger.info("Тип сообщения: FILE_RESP");
+            handleFileMessage((FileResp) message);
+        } else {
+            logger.fatal("Необрабатываемый тип сообщения: " + message.getType());
+            throw new RuntimeException();
+        }
+    }
+
+    @Override
+    public void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e) {
+        logger.fatal("Ошибка в  SocketThread: ", e);
+        throw new RuntimeException();
+    }
+    //endregion
+
+    public void send(Message message) {
+        socketThread.send(message);
+    }
+
+    //region MessageHandlers
+
+    private void handleAuthorizeResponse(AuthResp message) {
+        if (message.isAuthorized()) {
+            logger.info("Клиент успешно авторизован на сервере");
+            ((AuthScreen) screen).unblock();
+            setMainScreen();
+        } else {
+            // TODO popup
+            logger.info("Запрос авторизации отклонен сервером");
+            disconnect(false);
+            ((AuthScreen) screen).unblock();
+        }
+    }
+
+    private void handleErrorMessage(ErrorMessage message) {
+        // TODO info window
+        logger.error("Ошибка на сервере: " + message.getDescrition());
+        if (message.isDisconnect()) {
+            disconnect(false);
+        }
+    }
+
+    private void handleFilesList(FilesListResp message) {
+
+        ArrayList<File> files = message.getFilesList();
+        if (screen instanceof MainScreen) {
+            MainScreen mainScreen = (MainScreen) screen;
+            mainScreen.fillTable(files);
+        }
+    }
+
+    private void handleFileMessage(FileResp message) {
+        try {
+            // TODO check file name collisions
+            Path savePath = Paths.get(STORAGE_PATH);
+            if (Files.notExists(savePath)) {
+                Files.createDirectory(savePath);
+            }
+            Files.write(Paths.get(STORAGE_PATH + message.getName()), message.getBytes());
+        } catch (IOException e) {
+            // TODO popup
+            logger.error("Ошибка сохранения файла", e);
+        }
+    }
+
+    //endregion
 
     @Override
     public void uncaughtException(Thread thread, Throwable e) {

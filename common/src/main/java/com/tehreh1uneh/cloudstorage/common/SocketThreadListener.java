@@ -1,6 +1,6 @@
 package com.tehreh1uneh.cloudstorage.common;
 
-import com.tehreh1uneh.cloudstorage.common.messages.Message;
+import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 
 import java.net.Socket;
 

@@ -1,5 +1,8 @@
 package com.tehreh1uneh.cloudstorage.common.messages;
 
+import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
+import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
+
 public class ErrorMessage extends Message {
 
     private final String descrition;

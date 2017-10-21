@@ -1,4 +1,4 @@
-package com.tehreh1uneh.cloudstorage.common.messages;
+package com.tehreh1uneh.cloudstorage.common.messages.base;
 
 import java.io.Serializable;
 

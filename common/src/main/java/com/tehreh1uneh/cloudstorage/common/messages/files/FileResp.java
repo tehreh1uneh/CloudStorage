@@ -1,17 +1,20 @@
-package com.tehreh1uneh.cloudstorage.common.messages;
+package com.tehreh1uneh.cloudstorage.common.messages.files;
+
+import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
+import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class FileMessage extends Message {
+public class FileResp extends Message {
 
     private final String name;
     private final long length;
     private final byte[] bytes;
 
-    public FileMessage(File file) {
-        super(MessageType.FILE);
+    public FileResp(File file) {
+        super(MessageType.FILE_RESP);
         name = file.getName();
         length = file.length();
         try {

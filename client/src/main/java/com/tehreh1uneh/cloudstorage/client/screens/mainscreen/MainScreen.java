@@ -1,7 +1,9 @@
 package com.tehreh1uneh.cloudstorage.client.screens.mainscreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
-import com.tehreh1uneh.cloudstorage.common.messages.FileMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FileDel;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FileReq;
+import com.tehreh1uneh.cloudstorage.common.messages.files.FileResp;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -10,6 +12,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
 
@@ -19,7 +24,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -32,14 +36,13 @@ public final class MainScreen extends BaseScreen implements Initializable {
     @FXML
     TableColumn<TableRowData, String> colSize;
     @FXML
-    TableView tableFiles;
+    private TableView tableFiles;
     @FXML
     private TableColumn<TableRowData, String> colFileName;
     @FXML
     private TableColumn<TableRowData, String> colModified;
     private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     @FXML
     private void onActionSourceCode() {
@@ -63,6 +66,26 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionSync() {
+    }
+
+    @FXML
+    private void onTableMouseClick(MouseEvent mouseEvent) {
+        if (mouseEvent.getClickCount() > 1) {
+            clientApp.send(new FileReq(getActiveRowFileName()));
+        }
+    }
+
+    @FXML
+    private void onTableKeyPressed(KeyEvent keyEvent) {
+        if (keyEvent.getCode() == KeyCode.ENTER) {
+            clientApp.send(new FileReq(getActiveRowFileName()));
+        } else if (keyEvent.getCode() == KeyCode.DELETE) {
+            clientApp.send(new FileDel(getActiveRowFileName()));
+        }
+    }
+
+    private String getActiveRowFileName() {
+        return tableData.get(tableFiles.getSelectionModel().getFocusedIndex()).getFile().getName();
     }
 
     @Override
@@ -90,60 +113,19 @@ public final class MainScreen extends BaseScreen implements Initializable {
         List<File> files = fileChooser.showOpenMultipleDialog(clientApp.getStage());
         if (files != null) {
             for (File file : files) {
-                clientApp.send(new FileMessage(file));
+                clientApp.send(new FileResp(file));
             }
         }
     }
 
     public void fillTable(ArrayList<File> files) {
         tableData.clear();
-
         for (int i = 0; i < files.size(); i++) {
-
-            File file = files.get(i);
-
-            tableData.add(new TableRowData(
-                    fileNameWithoutExt(file.getName()),
-                    dateFormat.format(file.lastModified()),
-                    fileExt(file.getName()),
-                    byteSizeToString(file.length())));
+            tableData.add(new TableRowData(files.get(i)));
         }
-
         tableFiles.setItems(tableData);
     }
 
-    private String byteSizeToString(long length) {
-        if (length < 1024) {
-            return Long.toString(length) + " байт";
-        } else if (length < 1024 * 1024) {
-            long left = length / 1024;
-            int right = (int) ((double) (length % 1024) / 1024 * 100);
-
-            return Long.toString(left) + "." + Integer.toString(right) + " КБ";
-        } else {
-            long left = length / (1024 * 1024);
-            int right = (int) ((double) (length % (1024 * 1024)) / (1024 * 1024) * 100);
-
-            return Long.toString(left) + "." + Integer.toString(right) + " МБ";
-        }
-    }
-
-    private String fileExt(String fileName) {
-        if (fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
-            return fileName.substring(fileName.lastIndexOf(".") + 1);
-        } else {
-            return "";
-        }
-    }
-
-    private String fileNameWithoutExt(String fileName) {
-        if (fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0) {
-            return fileName.substring(0, fileName.lastIndexOf("."));
-        } else {
-            return fileName;
-        }
-
-    }
 
 
 }
