@@ -65,7 +65,17 @@ public class SocketThread extends Thread {
         busy = false;
     }
 
-    boolean isBusy() {
-        return busy;
+    public void disconnect() {
+        new Thread(() -> {
+            while (true) {
+                if (!isAlive()) break;
+                if (!busy) {
+                    interrupt();
+                    logger.info("Thread [" + getName() + "] успешно остановлен");
+                    eventListener.onStopSocketThread(this);
+                    break;
+                }
+            }
+        }).start();
     }
 }

@@ -1,6 +1,9 @@
 package com.tehreh1uneh.cloudstorage.server;
 
-import com.tehreh1uneh.cloudstorage.common.*;
+import com.tehreh1uneh.cloudstorage.common.ServerSocketThread;
+import com.tehreh1uneh.cloudstorage.common.ServerSocketThreadListener;
+import com.tehreh1uneh.cloudstorage.common.SocketThread;
+import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthRequestMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResponseMessage;
@@ -120,7 +123,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void disconnectClient(SocketThread clientThread) {
-        Utils.disconnectClient(clientThread, this);
+        clientThread.disconnect();
     }
 
     private void createUserPath(ClientSocketThread client) throws IOException {

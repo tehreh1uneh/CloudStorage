@@ -6,7 +6,6 @@ import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
-import com.tehreh1uneh.cloudstorage.common.Utils;
 import com.tehreh1uneh.cloudstorage.common.messages.DisconnectMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthRequestMessage;
@@ -155,7 +154,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
                 socketThread.send(new DisconnectMessage("Откдючение клиента"));
                 logger.info("Серверу отправлен запрос на отключение");
             }
-            Utils.disconnectClient(socketThread, this);
+            socketThread.disconnect();
             logger.info("Соединение с сервером разорвано");
             if (!(screen instanceof AuthScreen)) {
                 Platform.runLater(this::setAuthScreen);
