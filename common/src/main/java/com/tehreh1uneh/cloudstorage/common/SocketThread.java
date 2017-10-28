@@ -15,6 +15,7 @@ public class SocketThread extends Thread {
     private SocketThreadListener eventListener;
     private ObjectOutputStream out;
     private Message message;
+    private boolean busy = false;
 
     public SocketThread(SocketThreadListener eventListener, String name, Socket socket) {
         super(name);
@@ -52,7 +53,8 @@ public class SocketThread extends Thread {
         }
     }
 
-    public synchronized void send(Message msg) {
+    public void send(Message msg) {
+        busy = true;
         try {
             out.writeObject(msg);
             out.flush();
@@ -60,5 +62,10 @@ public class SocketThread extends Thread {
             eventListener.onExceptionSocketThread(this, socket, e);
             interrupt();
         }
+        busy = false;
+    }
+
+    boolean isBusy() {
+        return busy;
     }
 }

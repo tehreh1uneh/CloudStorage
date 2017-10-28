@@ -1,10 +1,13 @@
 package com.tehreh1uneh.cloudstorage.client.screenmanager;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
+import com.tehreh1uneh.cloudstorage.client.screens.RegistrationScreen.RegistrationScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
+import com.tehreh1uneh.cloudstorage.common.Utils;
+import com.tehreh1uneh.cloudstorage.common.messages.DisconnectMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthRequestMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResponseMessage;
@@ -12,6 +15,8 @@ import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 import com.tehreh1uneh.cloudstorage.common.messages.files.FileMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.files.FilesListResponse;
+import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationResponseMessage;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -93,6 +98,21 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
+    public void setRegScreen() {
+        try {
+            replaceSceneContent("/RegistrationScreen.fxml");
+            Platform.runLater(() -> {
+                stage.setTitle("Регистрация");
+                stage.setResizable(false);
+            });
+
+            logger.info("Успешно установлен экран регистрации");
+        } catch (Exception e) {
+            logger.fatal("Не удалость установить экран регистрации", e);
+            throw new RuntimeException("Не удалость установить экран регистрации");
+        }
+    }
+
     private void replaceSceneContent(String fxml) throws Exception {
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
@@ -109,12 +129,17 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     public void connect() {
         try {
             Socket socket = new Socket(DEFAULT_IP, DEFAULT_PORT);
-            socketThread = new SocketThread(this, "SocketThread: " + socket.getInetAddress(), socket);
+            socketThread = new SocketThread(this, "ClientSide SocketThread: " + socket.getInetAddress(), socket);
             logger.info("Успешно создан сокет для соединения с сервером");
         } catch (IOException e) {
             // TODO popup
             logger.info("Не удалось установить соединение с сервером", e);
-            ((AuthScreen) screen).unblock();
+
+            if (screen instanceof AuthScreen) {
+                ((AuthScreen) screen).unblock();
+            } else if (screen instanceof RegistrationScreen) {
+                ((RegistrationScreen) screen).unblock();
+            }
         }
     }
 
@@ -127,10 +152,10 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         if (socketThread != null && socketThread.isAlive()) {
             if (notifyServer) {
                 // TODO fix error
-//                socketThread.send(new DisconnectMessage("Откдючение клиента"));
+                socketThread.send(new DisconnectMessage("Откдючение клиента"));
                 logger.info("Серверу отправлен запрос на отключение");
             }
-            socketThread.interrupt();
+            Utils.disconnectClient(socketThread, this);
             logger.info("Соединение с сервером разорвано");
             if (!(screen instanceof AuthScreen)) {
                 Platform.runLater(this::setAuthScreen);
@@ -155,9 +180,14 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     @Override
     public void onReadySocketThread(SocketThread socketThread, Socket socket) {
         logger.info("Клиентский SocketThread  готов к работе");
-        AuthScreen authScreen = (AuthScreen) screen;
-        socketThread.send(new AuthRequestMessage(authScreen.getLogin(), authScreen.getPassword()));
-        logger.info("Отправлен запрос авторизации на сервер");
+
+        if (screen instanceof AuthScreen) {
+            socketThread.send(new AuthRequestMessage(((AuthScreen) screen).getLogin(), ((AuthScreen) screen).getPassword()));
+            logger.info("Отправлен запрос авторизации на сервер");
+        } else if (screen instanceof RegistrationScreen) {
+            socketThread.send(new RegistrationRequestMessage(((RegistrationScreen) screen).getLogin(), ((RegistrationScreen) screen).getPassword()));
+            logger.info("Отправлен запрос на регистрацию на сервер");
+        }
     }
 
     @Override
@@ -175,6 +205,9 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         } else if (message.getType() == MessageType.FILE) {
             logger.info("Тип сообщения: FILE");
             handleFileMessage((FileMessage) message);
+        } else if (message.getType() == MessageType.REG_RESPONSE) {
+            logger.info("Тип сообщения: REG_RESPONSE");
+            handleRegistrationMessage((RegistrationResponseMessage) message);
         } else {
             logger.fatal("Необрабатываемый тип сообщения: " + message.getType());
             throw new RuntimeException();
@@ -221,7 +254,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         if (screen instanceof MainScreen) {
             MainScreen mainScreen = (MainScreen) screen;
             mainScreen.fillTable(files);
-            mainScreen.unbloclAllButtons();
+            mainScreen.unblockAllButtons();
 
             Platform.runLater(() -> mainScreen.setProgressIndicatorActivity(false, ""));
         }
@@ -238,7 +271,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
             if (screen instanceof MainScreen) {
                 MainScreen mainScreen = (MainScreen) screen;
-                mainScreen.unbloclAllButtons();
+                mainScreen.unblockAllButtons();
                 Platform.runLater(() -> mainScreen.setProgressIndicatorActivity(false, ""));
             }
 
@@ -248,6 +281,13 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
+    private void handleRegistrationMessage(RegistrationResponseMessage message) {
+        if (message.isRegistered()) {
+            Platform.runLater(this::setAuthScreen);
+        } else {
+            // TODO notification
+        }
+    }
     //endregion
 
     @Override

@@ -1,15 +1,14 @@
 package com.tehreh1uneh.cloudstorage.server;
 
-import com.tehreh1uneh.cloudstorage.common.ServerSocketThread;
-import com.tehreh1uneh.cloudstorage.common.ServerSocketThreadListener;
-import com.tehreh1uneh.cloudstorage.common.SocketThread;
-import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
+import com.tehreh1uneh.cloudstorage.common.*;
 import com.tehreh1uneh.cloudstorage.common.messages.ErrorMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthRequestMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.auth.AuthResponseMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 import com.tehreh1uneh.cloudstorage.common.messages.files.*;
+import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationResponseMessage;
 import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
 import org.apache.log4j.Logger;
@@ -103,6 +102,17 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
                 }
                 logger.info("Клиент успешно авторизован: " + socket.toString());
             }
+        } else if (message.getType() == MessageType.REG_REQUEST) {
+
+            RegistrationRequestMessage regMessage = (RegistrationRequestMessage) message;
+            if (authorizeManager.register(regMessage.getLogin(), regMessage.getPassword())) {
+                logger.info("Пользователь (" + regMessage.getLogin() + ") успешно зарегистрирован: " + socket);
+                client.send(new RegistrationResponseMessage(true, "Регистрация пройдена успешно"));
+            } else {
+                logger.info("Пользователь (" + regMessage.getLogin() + ") уже существует: " + socket);
+                client.send(new RegistrationResponseMessage(false, "Такой пользователь уже существует"));
+            }
+            disconnectClient(client);
         } else {
             logger.fatal("Необрабатываемый тип сообщения: " + message.getType());
             throw new RuntimeException();
@@ -110,9 +120,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void disconnectClient(SocketThread clientThread) {
-        if (clientThread != null && clientThread.isAlive()) {
-            clientThread.interrupt();
-        }
+        Utils.disconnectClient(clientThread, this);
     }
 
     private void createUserPath(ClientSocketThread client) throws IOException {
@@ -220,7 +228,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     @Override
     public void onAcceptedSocket(ServerSocketThread thread, ServerSocket serverSocket, Socket socket) {
         logger.info("Клиент присоединился: " + socket.toString());
-        String threadName = "Socket thread: " + socket.getInetAddress() + ":" + socket.getPort();
+        String threadName = "ServerSide Socket thread: " + socket.getInetAddress() + ":" + socket.getPort();
         new ClientSocketThread(this, threadName, socket);
     }
 

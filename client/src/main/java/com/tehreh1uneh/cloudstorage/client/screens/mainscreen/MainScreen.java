@@ -21,6 +21,7 @@ import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -152,7 +153,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
     @FXML
     private void onActionButtonRename(ActionEvent actionEvent) {
         blockButton(buttonRename);
-        setProgressIndicatorActivity(true, "Переменование файла...");
+        setProgressIndicatorActivity(true, "Переименование файла...");
         renameFile();
     }
 
@@ -173,7 +174,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         dialog.setHeaderText("Переименование файла на сервере");
         dialog.setContentText("Введите новое имя файла:");
 
-        // TODO it does not work correctly... some buggies here
+        // TODO it does not work correctly... some buggies is here
         Pattern pattern = Pattern.compile(
                 "# Match a valid Windows filename (unspecified file system).          \n" +
                         "^                                # Anchor to start of string.        \n" +
@@ -214,8 +215,8 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     public void fillTable(ArrayList<java.io.File> files) {
         tableData.clear();
-        for (int i = 0; i < files.size(); i++) {
-            tableData.add(new TableRowData(files.get(i)));
+        for (File file : files) {
+            tableData.add(new TableRowData(file));
         }
         tableFiles.setItems(tableData);
     }
@@ -230,7 +231,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
     }
 
     // TODO unblock one button, server should send it
-    public void unbloclAllButtons() {
+    public void unblockAllButtons() {
         buttonDelete.setDisable(false);
         buttonDownload.setDisable(false);
         buttonRename.setDisable(false);

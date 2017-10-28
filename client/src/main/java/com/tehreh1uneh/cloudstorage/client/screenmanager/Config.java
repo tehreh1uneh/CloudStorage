@@ -5,7 +5,7 @@ public class Config {
     static final int DEFAULT_PORT = 8189;
 
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
-    static final String FILE_SEPARATOR = System.getProperty("file.separator");
-    static final String USER_HOME = System.getProperty("user.home");
+    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private static final String USER_HOME = System.getProperty("user.home");
     static final String STORAGE_PATH = USER_HOME + FILE_SEPARATOR + "Downloads" + FILE_SEPARATOR + "CloudStorage" + FILE_SEPARATOR;
 }

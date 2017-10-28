@@ -15,7 +15,6 @@ import java.util.ResourceBundle;
 public final class AuthScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(AuthScreen.class);
-
     @FXML
     private TextField login;
     @FXML
@@ -23,11 +22,6 @@ public final class AuthScreen extends BaseScreen implements Initializable {
     @FXML
     private ProgressIndicator progressIndicator;
     private boolean blocked;
-
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        logger.info("Экран авторизации успешно инициализирован");
-    }
 
     public String getLogin() {
         return login.getText();
@@ -37,7 +31,12 @@ public final class AuthScreen extends BaseScreen implements Initializable {
         return password.getText();
     }
 
-    private void connect() {
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        logger.info("Экран авторизации успешно инициализирован");
+    }
+
+    private void logIn() {
         if (!blocked) {
             logger.info("Интерфейс заблокирован. Попытка подлючения к серверу");
             block();
@@ -62,6 +61,11 @@ public final class AuthScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionAuth(ActionEvent actionEvent) {
-        connect();
+        logIn();
+    }
+
+    @FXML
+    private void onActionReg(ActionEvent actionEvent) {
+        clientApp.setRegScreen();
     }
 }

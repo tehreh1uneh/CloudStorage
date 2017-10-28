@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" maxHeight="450" maxWidth="350" xmlns="http://javafx.com/javafx/8.0.121"
+            fx:controller="com.tehreh1uneh.cloudstorage.client.screens.RegistrationScreen.RegistrationScreen">
+
+    <center>
+        <GridPane>
+            <columnConstraints>
+                <ColumnConstraints percentWidth="5"/>
+                <ColumnConstraints percentWidth="40"/>
+                <ColumnConstraints percentWidth="5"/>
+                <ColumnConstraints percentWidth="40"/>
+                <ColumnConstraints percentWidth="10"/>
+                <ColumnConstraints/>
+            </columnConstraints>
+
+            <rowConstraints>
+                <RowConstraints percentHeight="10"/>
+                <RowConstraints percentHeight="3"/>
+                <RowConstraints percentHeight="2"/>
+                <RowConstraints percentHeight="3"/>
+                <RowConstraints percentHeight="2"/>
+                <RowConstraints percentHeight="3"/>
+                <RowConstraints percentHeight="2"/>
+                <RowConstraints percentHeight="3"/>
+                <RowConstraints percentHeight="1"/>
+                <RowConstraints percentHeight="3"/>
+            </rowConstraints>
+
+            <Label text="Логин" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
+                <font>
+                    <Font name="Monaco Plain:001.001" size="10.0"/>
+                </font>
+            </Label>
+            <Label text="Пароль" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
+                <font>
+                    <Font name="Monaco Plain:001.001" size="10.0"/>
+                </font>
+            </Label>
+            <Label text="Повторите пароль" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="5">
+                <font>
+                    <Font name="Monaco Plain:001.001" size="10.0"/>
+                </font>
+            </Label>
+
+            <TextField fx:id="login" promptText="Логин" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                <font>
+                    <Font name="Monaco Plain:001.001" size="10.0"/>
+                </font>
+            </TextField>
+
+            <PasswordField fx:id="password" promptText="Пароль" GridPane.columnIndex="3" GridPane.rowIndex="3">
+                <font>
+                    <Font name="Monaco Plain:001.001" size="10.0"/>
+                </font>
+            </PasswordField>
+
+            <PasswordField fx:id="passwordConfirmation" promptText="Пароль" GridPane.columnIndex="3"
+                           GridPane.rowIndex="5">
+                <font>
+                    <Font name="Monaco Plain:001.001" size="10.0"/>
+                </font>
+            </PasswordField>
+
+            <Button defaultButton="true" onAction="#onActionRegister" text="Зарегистрироваться" GridPane.columnIndex="3"
+                    GridPane.rowIndex="7"/>
+            <Button onAction="#onActionCancel" text="Отмена" GridPane.columnIndex="3" GridPane.rowIndex="9"/>
+
+            <ProgressIndicator fx:id="progressIndicator" visible="false" GridPane.columnIndex="1"
+                               GridPane.rowIndex="10"/>
+
+        </GridPane>
+
+
+    </center>
+
+</BorderPane>
