@@ -18,7 +18,8 @@
                 <RowConstraints/>
             </rowConstraints>
 
-            <Button onMouseClicked="#onClickStartServer" text="Start server" GridPane.columnIndex="0">
+            <Button fx:id="buttonStart" onMouseClicked="#onClickStartServer" text="Start server"
+                    GridPane.columnIndex="0">
                 <font>
                     <Font name="Monaco Plain:001.001" size="8"/>
                 </font>
@@ -31,7 +32,8 @@
                 </font>
             </Hyperlink>
 
-            <Button onMouseClicked="#onClickStopServer" text="Stop server" GridPane.columnIndex="2">
+            <Button fx:id="buttonStop" onMouseClicked="#onClickStopServer" text="Stop server" disable="true"
+                    GridPane.columnIndex="2">
                 <font>
                     <Font name="Monaco Plain:001.001" size="8"/>
                 </font>

@@ -154,7 +154,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
                 socketThread.send(new DisconnectMessage("Откдючение клиента"));
                 logger.info("Серверу отправлен запрос на отключение");
             }
-            socketThread.disconnect();
+            socketThread.interrupt();
             logger.info("Соединение с сервером разорвано");
             if (!(screen instanceof AuthScreen)) {
                 Platform.runLater(this::setAuthScreen);

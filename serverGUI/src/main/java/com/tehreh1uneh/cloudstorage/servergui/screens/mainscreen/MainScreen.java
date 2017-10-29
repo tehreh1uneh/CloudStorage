@@ -3,6 +3,7 @@ package com.tehreh1uneh.cloudstorage.servergui.screens.mainscreen;
 import com.tehreh1uneh.cloudstorage.servergui.screenmanager.ServerApp;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import org.apache.log4j.Logger;
 
@@ -18,7 +19,11 @@ public final class MainScreen implements Initializable {
     private static final Logger logger = Logger.getLogger(MainScreen.class);
 
     @FXML
-    public Hyperlink sourceCodeLink;
+    private Hyperlink sourceCodeLink;
+    @FXML
+    private Button buttonStart;
+    @FXML
+    private Button buttonStop;
     private ServerApp serverApp;
 
     @Override
@@ -57,4 +62,15 @@ public final class MainScreen implements Initializable {
             logger.info("Ссылка на исходный код не может быть открыта. Desktop is not supported");
         }
     }
+
+    public void blockButtonStart() {
+        buttonStart.setDisable(true);
+        buttonStop.setDisable(false);
+    }
+
+    public void blockButtonStop() {
+        buttonStop.setDisable(true);
+        buttonStart.setDisable(false);
+    }
+
 }

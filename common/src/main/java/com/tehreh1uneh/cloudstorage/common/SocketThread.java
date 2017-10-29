@@ -14,7 +14,6 @@ public class SocketThread extends Thread {
     private final Socket socket;
     private SocketThreadListener eventListener;
     private ObjectOutputStream out;
-    private Message message;
     private boolean busy = false;
 
     public SocketThread(SocketThreadListener eventListener, String name, Socket socket) {
@@ -34,9 +33,11 @@ public class SocketThread extends Thread {
             eventListener.onReadySocketThread(this, socket);
 
             while (!isInterrupted()) {
+                Message message;
                 try {
                     message = (Message) in.readObject();
                 } catch (ClassNotFoundException e) {
+                    logger.fatal("Ошибка при кастовании сообщения в потоке [" + getName() + "]", e);
                     throw new RuntimeException(e);
                 }
                 eventListener.onReceiveMessageSocketThread(this, socket, message);
@@ -65,12 +66,13 @@ public class SocketThread extends Thread {
         busy = false;
     }
 
-    public void disconnect() {
+    @Override
+    public void interrupt() {
         new Thread(() -> {
             while (true) {
                 if (!isAlive()) break;
                 if (!busy) {
-                    interrupt();
+                    super.interrupt();
                     logger.info("Thread [" + getName() + "] успешно остановлен");
                     eventListener.onStopSocketThread(this);
                     break;
@@ -78,4 +80,5 @@ public class SocketThread extends Thread {
             }
         }).start();
     }
+
 }

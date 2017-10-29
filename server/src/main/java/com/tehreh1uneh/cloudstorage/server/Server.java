@@ -32,6 +32,11 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private AuthorizeManager authorizeManager;
     private ServerSocketThread serverSocketThread;
     private boolean blocked = false;
+    private ServerListener listener;
+
+    public Server(ServerListener listener) {
+        this.listener = listener;
+    }
 
     public void turnOn(int port, int timeout) {
         if (serverSocketThread != null && serverSocketThread.isAlive()) {
@@ -43,6 +48,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         authorizeManager = new DatabaseController();
         authorizeManager.initialize();
         logger.info("Подключение к СУБД инициализировано");
+        listener.onConnect();
     }
 
     public void turnOff() {
@@ -56,6 +62,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             logger.info("Соединение с СУБД разорвано");
             serverSocketThread.interrupt();
             logger.info("Серверу отправлен interrupt");
+            listener.onDisconnect();
         }
     }
 
@@ -123,7 +130,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void disconnectClient(SocketThread clientThread) {
-        clientThread.disconnect();
+        clientThread.interrupt();
     }
 
     private void createUserPath(ClientSocketThread client) throws IOException {
