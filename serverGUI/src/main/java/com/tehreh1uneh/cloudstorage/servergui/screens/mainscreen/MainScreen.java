@@ -72,5 +72,4 @@ public final class MainScreen implements Initializable {
         buttonStop.setDisable(true);
         buttonStart.setDisable(false);
     }
-
 }

@@ -4,6 +4,7 @@ public class Config {
     static final String DEFAULT_IP = "127.0.0.1";
     static final int DEFAULT_PORT = 8189;
 
+    public static final String MAX_FILE_SIZE_DESCRIPTION = "5 МБ";
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
     private static final String FILE_SEPARATOR = System.getProperty("file.separator");
     private static final String USER_HOME = System.getProperty("user.home");
@@ -11,6 +12,8 @@ public class Config {
 
     static final String AUTH_VIEW_PATH = "/AuthScreen.fxml";
     static final String AUTH_VIEW_TITLE = "Авторизация";
+    static final int AUTH_VIEW_WIDTH = 350;
+    static final int AUTH_VIEW_HEIGHT = 450;
 
     static final String MAIN_VIEW_PATH = "/MainScreen.fxml";
     static final String MAIN_VIEW_TITLE = "Cloud Storage";

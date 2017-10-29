@@ -1,7 +1,6 @@
 package com.tehreh1uneh.cloudstorage.client.screens.authscreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.PasswordField;
@@ -60,12 +59,12 @@ public final class AuthScreen extends BaseScreen implements Initializable {
     }
 
     @FXML
-    private void onActionAuth(ActionEvent actionEvent) {
+    private void onActionAuth() {
         logIn();
     }
 
     @FXML
-    private void onActionReg(ActionEvent actionEvent) {
+    private void onActionReg() {
         clientApp.setRegScreen();
     }
 }

@@ -3,7 +3,7 @@ package com.tehreh1uneh.cloudstorage.client.screenmanager;
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen;
-import com.tehreh1uneh.cloudstorage.client.screens.registrationScreen.RegistrationScreen;
+import com.tehreh1uneh.cloudstorage.client.screens.registrationscreen.RegistrationScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.messages.DisconnectMessage;
@@ -16,6 +16,7 @@ import com.tehreh1uneh.cloudstorage.common.messages.files.FileMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.files.FilesListResponse;
 import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationRequestMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationResponseMessage;
+import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -58,7 +59,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         logger.info("Клиентский GUI запущен");
     }
 
-    private void setAuthScreen() {
+    public void setAuthScreen() {
         try {
             replaceSceneContent(AUTH_VIEW_PATH);
 
@@ -69,8 +70,8 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
             stage.setTitle(AUTH_VIEW_TITLE);
             stage.setResizable(false);
-            stage.setWidth(350);
-            stage.setHeight(450);
+            stage.setWidth(AUTH_VIEW_WIDTH);
+            stage.setHeight(AUTH_VIEW_HEIGHT);
             stage.show();
 
             logger.info("Authorization screen: установлен успешно");
@@ -100,6 +101,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     public void setRegScreen() {
         try {
             replaceSceneContent(REGISTRATION_VIEW_PATH);
+
             Platform.runLater(() -> {
                 stage.setTitle(REGISTRATION_VIEW_TITLE);
                 stage.setResizable(false);
@@ -131,8 +133,8 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             socketThread = new SocketThread(this, "ClientSide SocketThread: " + socket.getInetAddress(), socket);
             logger.info("Успешно создан сокет для соединения с сервером");
         } catch (IOException e) {
-            // TODO popup
             logger.info("Не удалось установить соединение с сервером", e);
+            Notifier.show(5d, "Ошибка соединения", "Не удалось установить соединение с сервером", Notifier.NotificationType.ERROR);
 
             if (screen instanceof AuthScreen) {
                 ((AuthScreen) screen).unblock();
@@ -150,8 +152,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     private void disconnect(boolean notifyServer) {
         if (socketThread != null && socketThread.isAlive()) {
             if (notifyServer) {
-                // TODO fix error
-                socketThread.send(new DisconnectMessage("Откдючение клиента"));
+                socketThread.send(new DisconnectMessage("Отключение клиента"));
                 logger.info("Серверу отправлен запрос на отключение");
             }
             socketThread.interrupt();
@@ -232,7 +233,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             ((AuthScreen) screen).unblock();
             setMainScreen();
         } else {
-            // TODO popup
+            Notifier.show(5d, "Авторизация", message.getMessage(), Notifier.NotificationType.INFORMATION);
             logger.info("Запрос авторизации отклонен сервером");
             disconnect(false);
             ((AuthScreen) screen).unblock();
@@ -240,7 +241,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     }
 
     private void handleErrorMessage(ErrorMessage message) {
-        // TODO info window
+        Notifier.show(5d, "Ошибка на сервере", message.getDescrition(), Notifier.NotificationType.ERROR);
         logger.error("Ошибка на сервере: " + message.getDescrition());
         if (message.isDisconnect()) {
             disconnect(false);
@@ -275,16 +276,18 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
             }
 
         } catch (IOException e) {
-            // TODO popup
+            Notifier.show(5d, "Сохранение", "При сохранении файла возникла ошибка", Notifier.NotificationType.ERROR);
             logger.error("Ошибка сохранения файла", e);
         }
     }
 
     private void handleRegistrationMessage(RegistrationResponseMessage message) {
         if (message.isRegistered()) {
+            Notifier.show(5d, "Регистрация", "Пользователь успешно зарегистрирован", Notifier.NotificationType.INFORMATION);
             Platform.runLater(this::setAuthScreen);
         } else {
-            // TODO notification
+            Notifier.show(5d, "Регистрация", message.getMessage(), Notifier.NotificationType.ERROR);
+            ((RegistrationScreen) screen).unblock();
         }
     }
     //endregion

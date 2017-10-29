@@ -1,5 +1,6 @@
 package com.tehreh1uneh.cloudstorage.servergui.screenmanager;
 
+import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
 import com.tehreh1uneh.cloudstorage.server.Server;
 import com.tehreh1uneh.cloudstorage.server.ServerListener;
 import com.tehreh1uneh.cloudstorage.servergui.screens.mainscreen.MainScreen;
@@ -49,13 +50,13 @@ public class ServerApp extends Application implements ServerListener, Thread.Unc
     @Override
     public void onConnect() {
         controller.blockButtonStart();
-        // TODO popup
+        Notifier.show(5d, "Сервер", "Сервер запущен", Notifier.NotificationType.INFORMATION);
     }
 
     @Override
     public void onDisconnect() {
         controller.blockButtonStop();
-        // TODO popup
+        Notifier.show(5d, "Сервер", "Сервер остановлен", Notifier.NotificationType.INFORMATION);
     }
 
     @Override

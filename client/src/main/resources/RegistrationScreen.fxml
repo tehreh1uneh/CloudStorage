@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" maxHeight="450" maxWidth="350" xmlns="http://javafx.com/javafx/8.0.121"
-            fx:controller="com.tehreh1uneh.cloudstorage.client.screens.registrationScreen.RegistrationScreen">
+            fx:controller="com.tehreh1uneh.cloudstorage.client.screens.registrationscreen.RegistrationScreen">
 
     <center>
         <GridPane>

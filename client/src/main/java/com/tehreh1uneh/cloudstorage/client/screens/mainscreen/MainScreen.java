@@ -5,6 +5,7 @@ import com.tehreh1uneh.cloudstorage.common.messages.files.FileDeleteMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.files.FileMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.files.FileRenameMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.files.FileRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -34,6 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.MAX_FILE_SIZE;
+import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.MAX_FILE_SIZE_DESCRIPTION;
 
 public final class MainScreen extends BaseScreen implements Initializable {
 
@@ -117,7 +119,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
     }
 
     @FXML
-    private void sendFiles(ActionEvent actionEvent) {
+    private void sendFiles() {
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Выберите файлы для передачи");
@@ -130,7 +132,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
                     blockButton(buttonDownload);
                     setProgressIndicatorActivity(true, "Выгрузка файла...");
                 } else {
-                    // TODO info for user
+                    Notifier.show(5d, "Выгрузка", "Максимальный размер передаваемого файла: " + MAX_FILE_SIZE_DESCRIPTION + ". \n Файл \"" + file.getName() + "\" пропущен", Notifier.NotificationType.WARNING);
                 }
             }
         }
@@ -237,5 +239,4 @@ public final class MainScreen extends BaseScreen implements Initializable {
         buttonRename.setDisable(false);
         buttonUpload.setDisable(false);
     }
-
 }

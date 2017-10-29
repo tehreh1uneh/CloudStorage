@@ -1,7 +1,7 @@
-package com.tehreh1uneh.cloudstorage.client.screens.registrationScreen;
+package com.tehreh1uneh.cloudstorage.client.screens.registrationscreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
-import javafx.event.ActionEvent;
+import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ProgressIndicator;
@@ -11,10 +11,9 @@ import org.apache.log4j.Logger;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class RegistrationScreen extends BaseScreen implements Initializable {
+public final class RegistrationScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(RegistrationScreen.class);
-    private boolean blocked;
 
     @FXML
     private ProgressIndicator progressIndicator;
@@ -40,19 +39,33 @@ public class RegistrationScreen extends BaseScreen implements Initializable {
     }
 
     @FXML
-    private void onActionRegister(ActionEvent actionEvent) {
-        if (password.getText().equals(passwordConfirmation.getText()) && !login.getText().isEmpty() && !password.getText().isEmpty()) {
-            block();
-            new Thread(() -> clientApp.connect()).start();
-        } else if (!password.getText().equals(passwordConfirmation.getText())) {
-            password.clear();
-            passwordConfirmation.clear();
+    private void onActionRegister() {
+
+        boolean cancel = false;
+
+        if (login.getText().isEmpty()) {
+            Notifier.show(5d, "Регистрация", "Введите логин", Notifier.NotificationType.WARNING);
+            cancel = true;
         }
+
+        if (password.getText().isEmpty()) {
+            Notifier.show(5d, "Регистрация", "Введите пароль", Notifier.NotificationType.WARNING);
+            cancel = true;
+        }
+
+        if (!password.getText().equals(passwordConfirmation.getText()) && !password.getText().isEmpty()) {
+            Notifier.show(5d, "Регистрация", "Подтверждение пароля не совпадает с паролем", Notifier.NotificationType.WARNING);
+            cancel = true;
+        }
+
+        if (cancel) return;
+
+        block();
+        new Thread(() -> clientApp.connect()).start();
     }
 
     private void block() {
         logger.info("Интерфейс заблокирован");
-        blocked = true;
         login.setEditable(false);
         password.setEditable(false);
         passwordConfirmation.setEditable(false);
@@ -61,7 +74,6 @@ public class RegistrationScreen extends BaseScreen implements Initializable {
 
     public void unblock() {
         logger.info("Интерфейс разблокирован");
-        blocked = false;
         login.setEditable(true);
         password.setEditable(true);
         passwordConfirmation.setEditable(true);
@@ -69,7 +81,7 @@ public class RegistrationScreen extends BaseScreen implements Initializable {
     }
 
     @FXML
-    private void onActionCancel(ActionEvent actionEvent) {
-        // TODO set auth screen
+    private void onActionCancel() {
+        clientApp.setAuthScreen();
     }
 }

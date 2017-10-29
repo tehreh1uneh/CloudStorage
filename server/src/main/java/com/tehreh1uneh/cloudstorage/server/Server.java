@@ -12,6 +12,7 @@ import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 import com.tehreh1uneh.cloudstorage.common.messages.files.*;
 import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationRequestMessage;
 import com.tehreh1uneh.cloudstorage.common.messages.registration.RegistrationResponseMessage;
+import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
 import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
 import org.apache.log4j.Logger;
@@ -40,11 +41,12 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     public void turnOn(int port, int timeout) {
         if (serverSocketThread != null && serverSocketThread.isAlive()) {
+            Notifier.show(5d, "Сервер", "Сервер был запущен ранее", Notifier.NotificationType.INFORMATION);
             logger.info("Сервер был запущен ранее");
             return;
         }
         serverSocketThread = new ServerSocketThread(this, "ServerSocketThread", port, timeout);
-        logger.info("Сервер успешно запущен");
+        logger.info("Сервер запущен");
         authorizeManager = new DatabaseController();
         authorizeManager.initialize();
         logger.info("Подключение к СУБД инициализировано");
@@ -53,6 +55,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     public void turnOff() {
         if (serverSocketThread == null || !serverSocketThread.isAlive()) {
+            Notifier.show(5d, "Сервер", "Сервер не запущен", Notifier.NotificationType.INFORMATION);
             logger.info("Сервер не запущен");
             return;
         }
@@ -110,17 +113,17 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
                     disconnectClient(client);
                     return;
                 }
-                logger.info("Клиент успешно авторизован: " + socket.toString());
+                logger.info("Клиент авторизован: " + socket.toString());
             }
         } else if (message.getType() == MessageType.REG_REQUEST) {
 
             RegistrationRequestMessage regMessage = (RegistrationRequestMessage) message;
             if (authorizeManager.register(regMessage.getLogin(), regMessage.getPassword())) {
-                logger.info("Пользователь (" + regMessage.getLogin() + ") успешно зарегистрирован: " + socket);
-                client.send(new RegistrationResponseMessage(true, "Регистрация пройдена успешно"));
+                logger.info("Пользователь (" + regMessage.getLogin() + ") зарегистрирован: " + socket);
+                client.send(new RegistrationResponseMessage(true, "Пользователь зарегистрирован"));
             } else {
                 logger.info("Пользователь (" + regMessage.getLogin() + ") уже существует: " + socket);
-                client.send(new RegistrationResponseMessage(false, "Такой пользователь уже существует"));
+                client.send(new RegistrationResponseMessage(false, "Пользователь с таким логином уже существует"));
             }
             disconnectClient(client);
         } else {
@@ -175,6 +178,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             }
         } catch (IOException e) {
             logger.warn("Запрошенный файл (" + message.getFileName() + ") не найден на сервере.", e);
+            client.send(new ErrorMessage("Запрошенный файл (" + message.getFileName() + ") не найден на сервере.", false));
         }
     }
 
@@ -186,6 +190,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
                 sendFilesList(client);
             } catch (IOException e) {
                 logger.warn("Пользователь: " + client.getLogin() + ". Не удалось удалить файл: " + path, e);
+                client.send(new ErrorMessage("Не удалось удалить файл", false));
             }
         }
     }
