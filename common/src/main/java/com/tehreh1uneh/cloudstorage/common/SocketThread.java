@@ -61,6 +61,7 @@ public class SocketThread extends Thread {
             out.flush();
         } catch (IOException e) {
             eventListener.onExceptionSocketThread(this, socket, e);
+            busy = false;
             interrupt();
         }
         busy = false;
@@ -80,5 +81,4 @@ public class SocketThread extends Thread {
             }
         }).start();
     }
-
 }

@@ -1,6 +1,10 @@
 package com.tehreh1uneh.cloudstorage.client.screenmanager;
 
-public class Config {
+public final class Config {
+
+    private Config() {
+    }
+
     static final String DEFAULT_IP = "127.0.0.1";
     static final int DEFAULT_PORT = 8189;
 
@@ -22,5 +26,4 @@ public class Config {
 
     static final String REGISTRATION_VIEW_PATH = "/RegistrationScreen.fxml";
     static final String REGISTRATION_VIEW_TITLE = "Регистрация";
-
 }

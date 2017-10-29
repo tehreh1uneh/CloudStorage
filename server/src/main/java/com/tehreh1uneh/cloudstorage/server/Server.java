@@ -69,6 +69,8 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
     }
 
+    //region Message handlers
+
     private void handleAuthorizedClient(ClientSocketThread client, Message message) {
         if (message.getType() == MessageType.DISCONNECT) {
             disconnectClient(client);
@@ -132,18 +134,6 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
     }
 
-    private void disconnectClient(SocketThread clientThread) {
-        clientThread.interrupt();
-    }
-
-    private void createUserPath(ClientSocketThread client) throws IOException {
-        client.setPath(STORAGE_PATH + client.getLogin() + FILE_SEPARATOR);
-        Path path = Paths.get(client.getPath());
-        if (Files.notExists(path)) {
-            Files.createDirectories(path);
-        }
-    }
-
     private void handleFileMessage(FileMessage message, ClientSocketThread client) {
         try {
             // TODO check file name collisions
@@ -200,6 +190,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         Path newPath = Paths.get(client.getPath() + message.getNewName());
         if (Files.exists(oldPath) && oldPath.toFile().renameTo(newPath.toFile())) sendFilesList(client);
     }
+    //endregion
 
     private synchronized void sendFilesList(ClientSocketThread client) {
 
@@ -220,6 +211,18 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
 
         client.send(new FilesListResponse(filesList));
+    }
+
+    private void disconnectClient(SocketThread clientThread) {
+        clientThread.interrupt();
+    }
+
+    private void createUserPath(ClientSocketThread client) throws IOException {
+        client.setPath(STORAGE_PATH + client.getLogin() + FILE_SEPARATOR);
+        Path path = Paths.get(client.getPath());
+        if (Files.notExists(path)) {
+            Files.createDirectories(path);
+        }
     }
 
     //region ServerSocketThread

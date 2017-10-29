@@ -152,7 +152,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     private void disconnect(boolean notifyServer) {
         if (socketThread != null && socketThread.isAlive()) {
             if (notifyServer) {
-                socketThread.send(new DisconnectMessage("Отключение клиента"));
+                socketThread.send(new DisconnectMessage());
                 logger.info("Серверу отправлен запрос на отключение");
             }
             socketThread.interrupt();
@@ -221,10 +221,6 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     }
     //endregion
 
-    public void send(Message message) {
-        socketThread.send(message);
-    }
-
     //region MessageHandlers
 
     private void handleAuthorizeResponse(AuthResponseMessage message) {
@@ -291,6 +287,10 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
     //endregion
+
+    public void send(Message message) {
+        socketThread.send(message);
+    }
 
     @Override
     public void uncaughtException(Thread thread, Throwable e) {

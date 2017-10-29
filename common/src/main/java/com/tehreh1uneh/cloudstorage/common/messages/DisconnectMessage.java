@@ -5,11 +5,8 @@ import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 
 public class DisconnectMessage extends Message {
 
-    private String message;
-
-    public DisconnectMessage(String message) {
+    public DisconnectMessage() {
         super(MessageType.DISCONNECT);
-        this.message = message;
     }
 }
 

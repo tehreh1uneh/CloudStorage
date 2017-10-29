@@ -14,26 +14,35 @@ import java.util.ResourceBundle;
 public final class AuthScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(AuthScreen.class);
+    private boolean blocked;
+
+    //region View fields
+
     @FXML
     private TextField login;
     @FXML
     private PasswordField password;
     @FXML
     private ProgressIndicator progressIndicator;
-    private boolean blocked;
-
-    public String getLogin() {
-        return login.getText();
-    }
-
-    public String getPassword() {
-        return password.getText();
-    }
+    //endregion
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         logger.info("Экран авторизации успешно инициализирован");
     }
+
+    //region Events
+    @FXML
+    private void onActionAuth() {
+        logIn();
+    }
+
+    @FXML
+    private void onActionReg() {
+        clientApp.setRegScreen();
+    }
+
+    //endregion
 
     private void logIn() {
         if (!blocked) {
@@ -58,13 +67,14 @@ public final class AuthScreen extends BaseScreen implements Initializable {
         progressIndicator.setVisible(false);
     }
 
-    @FXML
-    private void onActionAuth() {
-        logIn();
+    //region Getters
+
+    public String getLogin() {
+        return login.getText();
     }
 
-    @FXML
-    private void onActionReg() {
-        clientApp.setRegScreen();
+    public String getPassword() {
+        return password.getText();
     }
+    //endregion
 }

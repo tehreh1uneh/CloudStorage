@@ -15,15 +15,24 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
 
     private static final Logger logger = Logger.getLogger(RegistrationScreen.class);
 
+    //region View fields
+
     @FXML
     private ProgressIndicator progressIndicator;
     @FXML
     private TextField passwordConfirmation;
     @FXML
-
     private TextField password;
     @FXML
     private TextField login;
+    //endregion
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        logger.info("Экран регистрации успешно инициализирован");
+    }
+
+    //region Getters
 
     public String getPassword() {
         return password.getText();
@@ -32,11 +41,9 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
     public String getLogin() {
         return login.getText();
     }
+    //endregion
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        logger.info("Экран регистрации успешно инициализирован");
-    }
+    //region Events
 
     @FXML
     private void onActionRegister() {
@@ -64,6 +71,12 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
         new Thread(() -> clientApp.connect()).start();
     }
 
+    @FXML
+    private void onActionCancel() {
+        clientApp.setAuthScreen();
+    }
+    //endregion
+
     private void block() {
         logger.info("Интерфейс заблокирован");
         login.setEditable(false);
@@ -78,10 +91,5 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
         password.setEditable(true);
         passwordConfirmation.setEditable(true);
         progressIndicator.setVisible(false);
-    }
-
-    @FXML
-    private void onActionCancel() {
-        clientApp.setAuthScreen();
     }
 }

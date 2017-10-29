@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 public class TableRowData {
 
     private File file;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     private String fileName;
     private String modified;
@@ -71,7 +71,7 @@ public class TableRowData {
 
     }
 
-    public File getFile() {
+    File getFile() {
         return file;
     }
 }

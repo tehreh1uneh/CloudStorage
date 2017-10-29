@@ -40,8 +40,10 @@ import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.MAX_FILE_
 public final class MainScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(MainScreen.class);
+    //region View fields
     @FXML
     TableColumn<TableRowData, String> colType;
+    private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
     @FXML
     TableColumn<TableRowData, String> colSize;
     @FXML
@@ -62,8 +64,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
     private ProgressIndicator progressIndicator;
     @FXML
     private Label progressLabel;
-
-    private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
+    //endregion
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -75,6 +76,8 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
         logger.info("Инициалищация основного экрана успешно завершена");
     }
+
+    //region Events
 
     @FXML
     private void onActionSourceCode() {
@@ -158,7 +161,9 @@ public final class MainScreen extends BaseScreen implements Initializable {
         setProgressIndicatorActivity(true, "Переименование файла...");
         renameFile();
     }
+    //endregion
 
+    //region Actions
     private void downloadFile() {
         clientApp.send(new FileRequestMessage(getActiveRowFileName()));
     }
@@ -210,6 +215,9 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
         result.ifPresent(newName -> clientApp.send(new FileRenameMessage(oldName, newName)));
     }
+    //endregion
+
+    //region Service
 
     private String getActiveRowFileName() {
         return tableData.get(tableFiles.getSelectionModel().getFocusedIndex()).getFile().getName();
@@ -239,4 +247,5 @@ public final class MainScreen extends BaseScreen implements Initializable {
         buttonRename.setDisable(false);
         buttonUpload.setDisable(false);
     }
+    //endregion
 }

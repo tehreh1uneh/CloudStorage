@@ -16,7 +16,6 @@ import static com.tehreh1uneh.cloudstorage.servergui.screenmanager.Config.*;
 public class ServerApp extends Application implements ServerListener, Thread.UncaughtExceptionHandler {
 
     private static final Logger logger = Logger.getLogger(ServerApp.class);
-
     private Server server;
     private MainScreen controller;
 
@@ -47,6 +46,8 @@ public class ServerApp extends Application implements ServerListener, Thread.Unc
         server.turnOff();
     }
 
+    //region ServerListener
+
     @Override
     public void onConnect() {
         controller.blockButtonStart();
@@ -58,6 +59,7 @@ public class ServerApp extends Application implements ServerListener, Thread.Unc
         controller.blockButtonStop();
         Notifier.show(5d, "Сервер", "Сервер остановлен", Notifier.NotificationType.INFORMATION);
     }
+    //endregion
 
     @Override
     public void uncaughtException(Thread thread, Throwable e) {

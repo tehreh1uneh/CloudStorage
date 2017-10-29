@@ -17,6 +17,9 @@ import java.util.ResourceBundle;
 public final class MainScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(MainScreen.class);
+    private ServerApp serverApp;
+
+    //region View fields
 
     @FXML
     private Hyperlink sourceCodeLink;
@@ -24,16 +27,14 @@ public final class MainScreen implements Initializable {
     private Button buttonStart;
     @FXML
     private Button buttonStop;
-    private ServerApp serverApp;
+    //endregion
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         logger.info("GUI сервера успешно инициализирован");
     }
 
-    public void setServerApp(ServerApp serverApp) {
-        this.serverApp = serverApp;
-    }
+    //region View events
 
     @FXML
     private void onClickStartServer() {
@@ -63,6 +64,8 @@ public final class MainScreen implements Initializable {
         }
     }
 
+    //endregion
+
     public void blockButtonStart() {
         buttonStart.setDisable(true);
         buttonStop.setDisable(false);
@@ -71,5 +74,9 @@ public final class MainScreen implements Initializable {
     public void blockButtonStop() {
         buttonStop.setDisable(true);
         buttonStart.setDisable(false);
+    }
+
+    public void setServerApp(ServerApp serverApp) {
+        this.serverApp = serverApp;
     }
 }
