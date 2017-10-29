@@ -8,4 +8,16 @@ public class Config {
     private static final String FILE_SEPARATOR = System.getProperty("file.separator");
     private static final String USER_HOME = System.getProperty("user.home");
     static final String STORAGE_PATH = USER_HOME + FILE_SEPARATOR + "Downloads" + FILE_SEPARATOR + "CloudStorage" + FILE_SEPARATOR;
+
+    static final String AUTH_VIEW_PATH = "/AuthScreen.fxml";
+    static final String AUTH_VIEW_TITLE = "Авторизация";
+
+    static final String MAIN_VIEW_PATH = "/MainScreen.fxml";
+    static final String MAIN_VIEW_TITLE = "Cloud Storage";
+    static final int MAIN_VIEW_WIDTH = 800;
+    static final int MAIN_VIEW_HEIGHT = 600;
+
+    static final String REGISTRATION_VIEW_PATH = "/RegistrationScreen.fxml";
+    static final String REGISTRATION_VIEW_TITLE = "Регистрация";
+
 }

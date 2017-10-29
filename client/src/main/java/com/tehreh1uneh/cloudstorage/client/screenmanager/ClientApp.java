@@ -1,9 +1,9 @@
 package com.tehreh1uneh.cloudstorage.client.screenmanager;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
-import com.tehreh1uneh.cloudstorage.client.screens.RegistrationScreen.RegistrationScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.authscreen.AuthScreen;
 import com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen;
+import com.tehreh1uneh.cloudstorage.client.screens.registrationScreen.RegistrationScreen;
 import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 import com.tehreh1uneh.cloudstorage.common.messages.DisconnectMessage;
@@ -60,55 +60,55 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     private void setAuthScreen() {
         try {
-            replaceSceneContent("/AuthScreen.fxml");
+            replaceSceneContent(AUTH_VIEW_PATH);
 
             stage.setOnCloseRequest(windowEvent -> {
                 disconnect(true);
                 System.exit(0);
             });
 
-            stage.setTitle("Авторизация");
+            stage.setTitle(AUTH_VIEW_TITLE);
             stage.setResizable(false);
             stage.setWidth(350);
             stage.setHeight(450);
             stage.show();
 
-            logger.info("Успешно установлен экран авторизации");
+            logger.info("Authorization screen: установлен успешно");
         } catch (Exception e) {
-            logger.fatal("Не удалость установить экран авторизации", e);
-            throw new RuntimeException("Не удалость установить экран авторизации");
+            logger.fatal("Authorization screen: не удалось установить", e);
+            throw new RuntimeException("Authorization screen: не удалось установить");
         }
     }
 
     private void setMainScreen() {
         try {
-            replaceSceneContent("/MainScreen.fxml");
+            replaceSceneContent(MAIN_VIEW_PATH);
             Platform.runLater(() -> {
-                stage.setTitle("Cloud storage");
+                stage.setTitle(MAIN_VIEW_TITLE);
                 stage.setResizable(true);
-                stage.setWidth(800);
-                stage.setHeight(600);
+                stage.setWidth(MAIN_VIEW_WIDTH);
+                stage.setHeight(MAIN_VIEW_HEIGHT);
             });
 
-            logger.info("Успешно установлен основной экран");
+            logger.info("Main screen: установлен успешно");
         } catch (Exception e) {
-            logger.fatal("Не удалость установить основной экран", e);
-            throw new RuntimeException("Не удалость установить основной экран");
+            logger.fatal("Main screen: не удалось установить", e);
+            throw new RuntimeException("Main screen: не удалось установить");
         }
     }
 
     public void setRegScreen() {
         try {
-            replaceSceneContent("/RegistrationScreen.fxml");
+            replaceSceneContent(REGISTRATION_VIEW_PATH);
             Platform.runLater(() -> {
-                stage.setTitle("Регистрация");
+                stage.setTitle(REGISTRATION_VIEW_TITLE);
                 stage.setResizable(false);
             });
 
-            logger.info("Успешно установлен экран регистрации");
+            logger.info("Registration screen: установлен успешно");
         } catch (Exception e) {
-            logger.fatal("Не удалость установить экран регистрации", e);
-            throw new RuntimeException("Не удалость установить экран регистрации");
+            logger.fatal("Registration screen: не удалось установить", e);
+            throw new RuntimeException("Registration screen: не удалось установить");
         }
     }
 
@@ -168,24 +168,24 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     @Override
     public void onStartSocketThread(SocketThread socketThread) {
-        logger.info("Клиентский SocketThread запушен");
+        logger.info("ClientSide SocketThread запушен");
     }
 
     @Override
     public void onStopSocketThread(SocketThread socketThread) {
-        logger.info("Клиентский SocketThread  остановлен");
+        logger.info("ClientSide SocketThread остановлен");
     }
 
     @Override
     public void onReadySocketThread(SocketThread socketThread, Socket socket) {
-        logger.info("Клиентский SocketThread  готов к работе");
+        logger.info("ClientSide SocketThread готов к работе");
 
         if (screen instanceof AuthScreen) {
             socketThread.send(new AuthRequestMessage(((AuthScreen) screen).getLogin(), ((AuthScreen) screen).getPassword()));
             logger.info("Отправлен запрос авторизации на сервер");
         } else if (screen instanceof RegistrationScreen) {
             socketThread.send(new RegistrationRequestMessage(((RegistrationScreen) screen).getLogin(), ((RegistrationScreen) screen).getPassword()));
-            logger.info("Отправлен запрос на регистрацию на сервер");
+            logger.info("Отправлен запрос регистрации на сервер");
         }
     }
 
@@ -215,7 +215,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     @Override
     public void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e) {
-        logger.fatal("Ошибка в  SocketThread: ", e);
+        logger.fatal("Ошибка в ClientSide SocketThread: ", e);
         throw new RuntimeException();
     }
     //endregion

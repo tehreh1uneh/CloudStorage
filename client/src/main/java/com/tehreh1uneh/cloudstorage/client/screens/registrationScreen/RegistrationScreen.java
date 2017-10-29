@@ -1,4 +1,4 @@
-package com.tehreh1uneh.cloudstorage.client.screens.RegistrationScreen;
+package com.tehreh1uneh.cloudstorage.client.screens.registrationScreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import javafx.event.ActionEvent;
@@ -70,5 +70,6 @@ public class RegistrationScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionCancel(ActionEvent actionEvent) {
+        // TODO set auth screen
     }
 }
