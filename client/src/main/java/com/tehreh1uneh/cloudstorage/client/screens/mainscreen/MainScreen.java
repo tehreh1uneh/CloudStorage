@@ -147,6 +147,24 @@ public final class MainScreen extends BaseScreen implements Initializable {
     private void onActionButtonRename(ActionEvent actionEvent) {
         renameFile();
     }
+
+    public void onDragOver(DragEvent dragEvent) {
+        Dragboard board = dragEvent.getDragboard();
+        if (board.hasFiles()) {
+            dragEvent.acceptTransferModes(TransferMode.COPY);
+        }
+
+    }
+
+    @FXML
+    private void onDragDropped(DragEvent dragEvent) {
+        Dragboard board = dragEvent.getDragboard();
+        List<File> files = board.getFiles();
+        for (File file : files) {
+            sendFile(file);
+        }
+    }
+
     //endregion
 
     //region Actions
@@ -160,6 +178,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         clientApp.send(new FileDeleteMessage(getActiveRowFileName()));
     }
 
+    @SuppressWarnings("ALL")
     private void renameFile() {
         if (tableFiles.getSelectionModel().getFocusedIndex() == -1) return;
         blockButton(buttonRename);
@@ -169,10 +188,9 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
         TextInputDialog dialog = new TextInputDialog(oldName);
         dialog.setTitle("Переименование");
-        dialog.setHeaderText("Переименование файла на сервере");
+        dialog.setHeaderText("Переименование файла");
         dialog.setContentText("Введите новое имя файла:");
 
-        // TODO it does not work correctly... some buggies is here
         Pattern pattern = Pattern.compile(
                 "# Match a valid Windows filename (unspecified file system).          \n" +
                         "^                                # Anchor to start of string.        \n" +
@@ -189,22 +207,23 @@ public final class MainScreen extends BaseScreen implements Initializable {
                         "$                                # Anchor to end of string.            ",
                 Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.COMMENTS);
 
-        TextFormatter<String> textFormatter = new TextFormatter<>(change -> {
-            String newName = change.getControlNewText();
-            Matcher matcher = pattern.matcher(newName);
-
-            if (!matcher.matches()) {
-                change.setText("");
-                return null;
-            } else {
-                return change;
-            }
-        });
-
-        dialog.getEditor().setTextFormatter(textFormatter);
         Optional<String> result = dialog.showAndWait();
 
-        result.ifPresent(newName -> clientApp.send(new FileRenameMessage(oldName, newName)));
+        result.ifPresentOrElse(
+                newName -> {
+                    Matcher matcher = pattern.matcher(newName);
+                    if (!matcher.matches()) {
+                        Notifier.show(5d, "Ошибка", "Имя файла содержит недопустимые символы или является зарезервированным", Notifier.NotificationType.ERROR);
+                        unblockAllButtons();
+                        setProgressIndicatorActivity(false, "");
+                        return;
+                    }
+                    clientApp.send(new FileRenameMessage(oldName, newName));
+                },
+                () -> {
+                    unblockAllButtons();
+                    setProgressIndicatorActivity(false, "");
+                });
     }
     //endregion
 
@@ -244,7 +263,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         tableFiles.setItems(tableData);
     }
 
-    public void setProgressIndicatorActivity(boolean visible, String message) {
+    public synchronized void setProgressIndicatorActivity(boolean visible, String message) {
         progressIndicator.setVisible(visible);
         progressLabel.setText(visible ? message : "");
     }
@@ -261,24 +280,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         buttonUpload.setDisable(false);
     }
 
-
     //endregion
-    public void onDragOver(DragEvent dragEvent) {
-        Dragboard board = dragEvent.getDragboard();
-        if (board.hasFiles()) {
-            dragEvent.acceptTransferModes(TransferMode.COPY);
-        }
-
-    }
-
-    @FXML
-    private void onDragDropped(DragEvent dragEvent) {
-        Dragboard board = dragEvent.getDragboard();
-        List<File> files = board.getFiles();
-        for (File file : files) {
-            sendFile(file);
-        }
-    }
 
 }
 
