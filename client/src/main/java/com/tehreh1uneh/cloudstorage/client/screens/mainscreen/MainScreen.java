@@ -15,9 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
 
@@ -40,10 +38,11 @@ import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.MAX_FILE_
 public final class MainScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(MainScreen.class);
+    private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
+
     //region View fields
     @FXML
     TableColumn<TableRowData, String> colType;
-    private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
     @FXML
     TableColumn<TableRowData, String> colSize;
     @FXML
@@ -112,6 +111,10 @@ public final class MainScreen extends BaseScreen implements Initializable {
             downloadFile();
         } else if (keyEvent.getCode() == KeyCode.DELETE) {
             deleteFile();
+        } else if (keyEvent.getCode() == KeyCode.INSERT) {
+            chooseAndSendFiles();
+        } else if (keyEvent.getCode() == KeyCode.F2) {
+            renameFile();
         }
     }
 
@@ -122,23 +125,8 @@ public final class MainScreen extends BaseScreen implements Initializable {
     }
 
     @FXML
-    private void sendFiles() {
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Выберите файлы для передачи");
-
-        List<java.io.File> files = fileChooser.showOpenMultipleDialog(clientApp.getStage());
-        if (files != null) {
-            for (java.io.File file : files) {
-                if (file.length() <= MAX_FILE_SIZE) {
-                    clientApp.send(new FileMessage(file));
-                    blockButton(buttonDownload);
-                    setProgressIndicatorActivity(true, "Выгрузка файла...");
-                } else {
-                    Notifier.show(5d, "Выгрузка", "Максимальный размер передаваемого файла: " + MAX_FILE_SIZE_DESCRIPTION + ". \n Файл \"" + file.getName() + "\" пропущен", Notifier.NotificationType.WARNING);
-                }
-            }
-        }
+    private void onActionUpload() {
+        chooseAndSendFiles();
     }
 
     @FXML
@@ -157,22 +145,25 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionButtonRename(ActionEvent actionEvent) {
-        blockButton(buttonRename);
-        setProgressIndicatorActivity(true, "Переименование файла...");
         renameFile();
     }
     //endregion
 
     //region Actions
     private void downloadFile() {
+        if (tableFiles.getSelectionModel().getFocusedIndex() == -1) return;
         clientApp.send(new FileRequestMessage(getActiveRowFileName()));
     }
 
     private void deleteFile() {
+        if (tableFiles.getSelectionModel().getFocusedIndex() == -1) return;
         clientApp.send(new FileDeleteMessage(getActiveRowFileName()));
     }
 
     private void renameFile() {
+        if (tableFiles.getSelectionModel().getFocusedIndex() == -1) return;
+        blockButton(buttonRename);
+        setProgressIndicatorActivity(true, "Переименование файла...");
 
         String oldName = getActiveRowFileName();
 
@@ -219,6 +210,28 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     //region Service
 
+    private void chooseAndSendFiles() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Выберите файлы для передачи");
+
+        List<java.io.File> files = fileChooser.showOpenMultipleDialog(clientApp.getStage());
+        if (files != null) {
+            for (java.io.File file : files) {
+                sendFile(file);
+            }
+        }
+    }
+
+    private void sendFile(File file) {
+        if (file.length() <= MAX_FILE_SIZE) {
+            clientApp.send(new FileMessage(file));
+            blockButton(buttonDownload);
+            setProgressIndicatorActivity(true, "Выгрузка файла...");
+        } else {
+            Notifier.show(5d, "Выгрузка", "Максимальный размер передаваемого файла: " + MAX_FILE_SIZE_DESCRIPTION + ". \n Файл \"" + file.getName() + "\" пропущен", Notifier.NotificationType.WARNING);
+        }
+    }
+
     private String getActiveRowFileName() {
         return tableData.get(tableFiles.getSelectionModel().getFocusedIndex()).getFile().getName();
     }
@@ -247,5 +260,27 @@ public final class MainScreen extends BaseScreen implements Initializable {
         buttonRename.setDisable(false);
         buttonUpload.setDisable(false);
     }
+
+
     //endregion
+    public void onDragOver(DragEvent dragEvent) {
+        Dragboard board = dragEvent.getDragboard();
+        if (board.hasFiles()) {
+            dragEvent.acceptTransferModes(TransferMode.COPY);
+        }
+
+    }
+
+    @FXML
+    private void onDragDropped(DragEvent dragEvent) {
+        Dragboard board = dragEvent.getDragboard();
+        List<File> files = board.getFiles();
+        for (File file : files) {
+            sendFile(file);
+        }
+    }
+
 }
+
+
+
