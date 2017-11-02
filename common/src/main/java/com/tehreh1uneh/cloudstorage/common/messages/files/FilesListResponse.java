@@ -8,11 +8,17 @@ import java.util.ArrayList;
 
 public class FilesListResponse extends Message {
 
-    private ArrayList<File> filesList;
+    private final ArrayList<File> filesList;
+    private final boolean root;
 
-    public FilesListResponse(ArrayList<File> filesList) {
+    public FilesListResponse(ArrayList<File> filesList, boolean root) {
         super(MessageType.FILES_LIST_RESPONSE);
         this.filesList = filesList;
+        this.root = root;
+    }
+
+    public boolean isRoot() {
+        return root;
     }
 
     public ArrayList<File> getFilesList() {

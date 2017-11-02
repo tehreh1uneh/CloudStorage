@@ -17,11 +17,13 @@ import com.tehreh1uneh.cloudstorage.server.authorization.AuthorizeManager;
 import com.tehreh1uneh.cloudstorage.server.authorization.DatabaseController;
 import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import static com.tehreh1uneh.cloudstorage.server.Config.FILE_SEPARATOR;
@@ -33,7 +35,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private AuthorizeManager authorizeManager;
     private ServerSocketThread serverSocketThread;
     private boolean blocked = false;
-    private ServerListener listener;
+    private final ServerListener listener;
 
     public Server(ServerListener listener) {
         this.listener = listener;
@@ -79,6 +81,14 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         } else if (message.getType() == MessageType.FILE_REQUEST) {
             handleFileRequest((FileRequestMessage) message, client);
         } else if (message.getType() == MessageType.FILES_LIST_REQUEST) {
+            FilesListRequest request = (FilesListRequest) message;
+            if (request.isUp()) {
+                client.setCurrentPath(Paths.get(client.getCurrentPath() + FILE_SEPARATOR + "..").normalize().toString() + FILE_SEPARATOR);
+            } else if (request.isDirectory()) {
+                client.setCurrentPath(request.getDirectoryPath());
+            } else {
+                client.setCurrentPath("");
+            }
             sendFilesList(client);
         } else if (message.getType() == MessageType.FILE_DELETE) {
             deleteFile(client, (FileDeleteMessage) message);
@@ -137,7 +147,9 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private void handleFileMessage(FileMessage message, ClientSocketThread client) {
         try {
             // TODO check file name collisions
-            Files.write(Paths.get(client.getPath() + message.getName()), message.getBytes());
+
+            String currentPath = client.getCurrentPath().isEmpty() ? client.getPath() : client.getCurrentPath();
+            Files.write(Paths.get(currentPath + FILE_SEPARATOR + message.getName()), message.getBytes());
             sendFilesList(client);
         } catch (IOException e) {
             logger.error("Пользователь: " + client.getLogin() + ". Ошибка сохранения файла");
@@ -146,34 +158,16 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void handleFileRequest(FileRequestMessage message, ClientSocketThread client) {
-
-        try {
-            ArrayList<java.io.File> files = new ArrayList<>();
-            String fileName = message.getFileName();
-
-            Files.walkFileTree(Paths.get(STORAGE_PATH), new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (!attrs.isDirectory()) {
-                        if (file.getFileName().toString().equals(fileName)) {
-                            files.add(new java.io.File(file.toUri()));
-                        }
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-
-            for (java.io.File file : files) {
-                client.send(new FileMessage(file));
-            }
-        } catch (IOException e) {
-            logger.warn("Запрошенный файл (" + message.getFileName() + ") не найден на сервере.", e);
-            client.send(new ErrorMessage("Запрошенный файл (" + message.getFileName() + ") не найден на сервере.", false));
+        File file = message.getFile();
+        if (!file.isDirectory()) {
+            client.send(new FileMessage(new File(file.getPath())));
+        } else {
+            client.send(new ErrorMessage("Нельзя скачивать папки", false));
         }
     }
 
     private void deleteFile(ClientSocketThread client, FileDeleteMessage message) {
-        Path path = Paths.get(client.getPath() + message.getFileName());
+        Path path = Paths.get(message.getFile().getPath());
         if (Files.exists(path)) {
             try {
                 Files.delete(path);
@@ -186,22 +180,22 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void renameFile(ClientSocketThread client, FileRenameMessage message) {
-        Path oldPath = Paths.get(client.getPath() + message.getOldName());
-        Path newPath = Paths.get(client.getPath() + message.getNewName());
+        Path oldPath = Paths.get(message.getFile().getPath());
+        Path newPath = Paths.get(message.getFile().getParent() + FILE_SEPARATOR + message.getNewName());
         if (Files.exists(oldPath) && oldPath.toFile().renameTo(newPath.toFile())) sendFilesList(client);
     }
     //endregion
 
     private synchronized void sendFilesList(ClientSocketThread client) {
 
-        ArrayList<java.io.File> filesList = new ArrayList<>();
+        ArrayList<File> filesList = new ArrayList<>();
+        boolean root = client.getCurrentPath().isEmpty() || client.getPath().equals(client.getCurrentPath());
+        Path currentPath = Paths.get(root ? client.getPath() : client.getCurrentPath());
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(client.getPath()))) {
-            for (Path entry : stream) {
-                if (!Files.isDirectory(entry)) {
-                    filesList.add(new java.io.File(entry.toUri()));
-                }
-            }
+        try {
+            Files.walk(currentPath, 1).forEach(it -> {
+                if (it != currentPath) filesList.add(it.toFile());
+            });
         } catch (IOException e) {
             String errorMessage = "Ошибка чтения списка файлов.";
             logger.error(errorMessage, e);
@@ -209,8 +203,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             disconnectClient(client);
             return;
         }
-
-        client.send(new FilesListResponse(filesList));
+        client.send(new FilesListResponse(filesList, root));
     }
 
     private void disconnectClient(SocketThread clientThread) {

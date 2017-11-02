@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Message implements Serializable {
 
     @SuppressWarnings("WeakerAccess")
-    protected MessageType type;
+    protected final MessageType type;
 
     protected Message(MessageType type) {
         this.type = type;

@@ -5,8 +5,8 @@ import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 
 public class RegistrationResponseMessage extends Message {
 
-    private boolean registered;
-    private String message;
+    private final boolean registered;
+    private final String message;
 
     public RegistrationResponseMessage(boolean registered, String message) {
         super(MessageType.REG_RESPONSE);

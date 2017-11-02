@@ -1,17 +1,52 @@
 package com.tehreh1uneh.cloudstorage.client.screens.mainscreen;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
+
+import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.*;
 
 public class TableRowData {
 
     private File file;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-
-    private String fileName;
+    private final String fileName;
+    private ImageView icon;
     private String modified;
     private String type;
     private String size;
+
+    TableRowData(File file) {
+        this.file = file;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        modified = dateFormat.format(file.lastModified());
+
+        if (file.isDirectory()) {
+            fileName = file.getName();
+            type = FOLDER_DESCRIPTION;
+            setFolderIcon();
+        } else {
+            fileName = fileNameWithoutExt(file.getName());
+            type = fileExt(file.getName());
+            size = byteSizeToString(file.length());
+        }
+    }
+
+    TableRowData() {
+        setFolderIcon();
+        fileName = "..";
+    }
+
+    private void setFolderIcon() {
+        icon = new ImageView(new Image(ICON_FOLDER_PATH));
+        icon.setFitWidth(COLUMN_FOLDER_WIDTH * ICON_FOLDER_RATIO);
+        icon.setPreserveRatio(true);
+    }
+
+    public ImageView getIcon() {
+        return icon;
+    }
 
     public String getFileName() {
         return fileName;
@@ -27,15 +62,6 @@ public class TableRowData {
 
     public String getSize() {
         return size;
-    }
-
-    TableRowData(File file) {
-        this.file = file;
-
-        this.fileName = fileNameWithoutExt(file.getName());
-        this.modified = dateFormat.format(file.lastModified());
-        this.type = fileExt(file.getName());
-        this.size = byteSizeToString(file.length());
     }
 
     private String byteSizeToString(long length) {

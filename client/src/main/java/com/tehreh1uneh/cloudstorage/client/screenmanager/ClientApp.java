@@ -191,7 +191,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     }
 
     @Override
-    public void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
+    public synchronized void onReceiveMessageSocketThread(SocketThread socketThread, Socket socket, Message message) {
         logger.info("Получено сообщение с сервера");
         if (message.getType() == MessageType.AUTH_RESPONSE) {
             logger.info("Тип сообщения: AUTH_RESPONSE");
@@ -244,15 +244,14 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
         }
     }
 
-    private void handleFilesList(FilesListResponse message) {
+    private synchronized void handleFilesList(FilesListResponse message) {
 
         ArrayList<File> files = message.getFilesList();
         if (screen instanceof MainScreen) {
             MainScreen mainScreen = (MainScreen) screen;
-            mainScreen.fillTable(files);
+            mainScreen.fillTable(files, message.isRoot());
+            mainScreen.setProgressIndicatorActivity(false, "");
             mainScreen.unblockAllButtons();
-
-            Platform.runLater(() -> mainScreen.setProgressIndicatorActivity(false, ""));
         }
     }
 

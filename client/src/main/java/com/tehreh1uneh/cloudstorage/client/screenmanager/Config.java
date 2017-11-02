@@ -26,4 +26,10 @@ public final class Config {
 
     static final String REGISTRATION_VIEW_PATH = "/RegistrationScreen.fxml";
     static final String REGISTRATION_VIEW_TITLE = "Регистрация";
+
+    public static final String ICON_FOLDER_PATH = "/folder_icon.png";
+    public static final String FOLDER_DESCRIPTION = "Folder";
+    public static final double COLUMN_FOLDER_WIDTH = 30;
+    public static final double ICON_FOLDER_RATIO = 0.8;
+
 }

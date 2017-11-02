@@ -24,6 +24,7 @@
         <TableView fx:id="tableFiles" onDragDropped="#onDragDropped" onDragOver="#onDragOver"
                    onKeyPressed="#onTableKeyPressed" onMouseClicked="#onTableMouseClick" BorderPane.alignment="CENTER">
             <columns>
+                <TableColumn fx:id="colImage" resizable="false"/>
                 <TableColumn fx:id="colFileName" text="Имя файла"/>
                 <TableColumn fx:id="colModified" text="Изменен"/>
                 <TableColumn fx:id="colType" text="Тип"/>
@@ -53,51 +54,49 @@
                                GridPane.rowIndex="1"/>
 
             <HBox GridPane.columnIndex="2">
-                <children>
-                    <Button fx:id="buttonUpload" onAction="#onActionUpload" text="Загрузить" textAlignment="CENTER">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Button>
+                <Button fx:id="buttonUpload" onAction="#onActionUpload" text="Загрузить" textAlignment="CENTER">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Button>
 
-                    <Label text=" ">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Label>
+                <Label text=" ">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Label>
 
-                    <Button fx:id="buttonDownload" onAction="#onActionButtonDownload" text="Скачать"
-                            textAlignment="CENTER">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Button>
+                <Button fx:id="buttonDownload" onAction="#onActionButtonDownload" text="Скачать"
+                        textAlignment="CENTER">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Button>
 
-                    <Label text=" ">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Label>
+                <Label text=" ">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Label>
 
-                    <Button fx:id="buttonDelete" onAction="#onActionButtonDelete" text="Удалить" textAlignment="CENTER">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Button>
+                <Button fx:id="buttonDelete" onAction="#onActionButtonDelete" text="Удалить" textAlignment="CENTER">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Button>
 
-                    <Label text=" ">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Label>
+                <Label text=" ">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Label>
 
-                    <Button fx:id="buttonRename" onAction="#onActionButtonRename" text="Переименовать"
-                            textAlignment="CENTER">
-                        <font>
-                            <Font name="Monaco Plain:001.001" size="10.0"/>
-                        </font>
-                    </Button>
-                </children>
+                <Button fx:id="buttonRename" onAction="#onActionButtonRename" text="Переименовать"
+                        textAlignment="CENTER">
+                    <font>
+                        <Font name="Monaco Plain:001.001" size="10.0"/>
+                    </font>
+                </Button>
             </HBox>
             <Label fx:id="progressLabel" textFill="#9a9696" GridPane.columnIndex="2" GridPane.rowIndex="1">
                 <font>

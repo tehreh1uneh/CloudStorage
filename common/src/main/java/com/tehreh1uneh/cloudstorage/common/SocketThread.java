@@ -12,7 +12,7 @@ public class SocketThread extends Thread {
 
     private static final Logger logger = Logger.getLogger(SocketThread.class);
     private final Socket socket;
-    private SocketThreadListener eventListener;
+    private final SocketThreadListener eventListener;
     private ObjectOutputStream out;
     private boolean busy = false;
 

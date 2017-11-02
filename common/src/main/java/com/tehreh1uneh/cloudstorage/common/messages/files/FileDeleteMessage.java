@@ -3,17 +3,19 @@ package com.tehreh1uneh.cloudstorage.common.messages.files;
 import com.tehreh1uneh.cloudstorage.common.messages.base.Message;
 import com.tehreh1uneh.cloudstorage.common.messages.base.MessageType;
 
+import java.io.File;
+
 public class FileDeleteMessage extends Message {
 
-    private String fileName;
+    private final File file;
 
-    public FileDeleteMessage(String fileName) {
+    public FileDeleteMessage(File file) {
         super(MessageType.FILE_DELETE);
-        this.fileName = fileName;
+        this.file = file;
 
     }
 
-    public String getFileName() {
-        return fileName;
+    public File getFile() {
+        return file;
     }
 }

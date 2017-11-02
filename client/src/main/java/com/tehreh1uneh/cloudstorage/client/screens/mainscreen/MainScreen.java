@@ -1,20 +1,18 @@
 package com.tehreh1uneh.cloudstorage.client.screens.mainscreen;
 
 import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileDeleteMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileRenameMessage;
-import com.tehreh1uneh.cloudstorage.common.messages.files.FileRequestMessage;
+import com.tehreh1uneh.cloudstorage.common.messages.files.*;
 import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
@@ -32,21 +30,22 @@ import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.MAX_FILE_SIZE;
-import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.MAX_FILE_SIZE_DESCRIPTION;
+import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.*;
 
 public final class MainScreen extends BaseScreen implements Initializable {
 
     private static final Logger logger = Logger.getLogger(MainScreen.class);
-    private ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
 
     //region View fields
     @FXML
     TableColumn<TableRowData, String> colType;
     @FXML
     TableColumn<TableRowData, String> colSize;
+    private final ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
     @FXML
-    private TableView tableFiles;
+    private TableView<TableRowData> tableFiles;
+    @FXML
+    private TableColumn<TableRowData, ImageView> colImage;
     @FXML
     private TableColumn<TableRowData, String> colFileName;
     @FXML
@@ -67,6 +66,8 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        colImage.setCellValueFactory(new PropertyValueFactory<>("icon"));
+        colImage.setPrefWidth(COLUMN_FOLDER_WIDTH);
 
         colFileName.setCellValueFactory(new PropertyValueFactory<>("fileName"));
         colModified.setCellValueFactory(new PropertyValueFactory<>("modified"));
@@ -101,14 +102,14 @@ public final class MainScreen extends BaseScreen implements Initializable {
     @FXML
     private void onTableMouseClick(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() > 1) {
-            downloadFile();
+            handleDoubleClick();
         }
     }
 
     @FXML
     private void onTableKeyPressed(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
-            downloadFile();
+            handleDoubleClick();
         } else if (keyEvent.getCode() == KeyCode.DELETE) {
             deleteFile();
         } else if (keyEvent.getCode() == KeyCode.INSERT) {
@@ -130,21 +131,21 @@ public final class MainScreen extends BaseScreen implements Initializable {
     }
 
     @FXML
-    private void onActionButtonDownload(ActionEvent actionEvent) {
+    private void onActionButtonDownload() {
         blockButton(buttonDownload);
         setProgressIndicatorActivity(true, "Загрузка файла...");
         new Thread(this::downloadFile).start();
     }
 
     @FXML
-    private void onActionButtonDelete(ActionEvent actionEvent) {
+    private void onActionButtonDelete() {
         blockButton(buttonDelete);
         setProgressIndicatorActivity(true, "Удаление файла...");
         new Thread(this::deleteFile).start();
     }
 
     @FXML
-    private void onActionButtonRename(ActionEvent actionEvent) {
+    private void onActionButtonRename() {
         renameFile();
     }
 
@@ -169,13 +170,19 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     //region Actions
     private void downloadFile() {
-        if (tableFiles.getSelectionModel().getFocusedIndex() == -1) return;
-        clientApp.send(new FileRequestMessage(getActiveRowFileName()));
+        if (!rowExists()) return;
+        clientApp.send(new FileRequestMessage(getActiveRowFile()));
     }
 
     private void deleteFile() {
-        if (tableFiles.getSelectionModel().getFocusedIndex() == -1) return;
-        clientApp.send(new FileDeleteMessage(getActiveRowFileName()));
+        if (!rowExists()) return;
+        File file = getActiveRowFile();
+        if (file == null) {
+            unblockAllButtons();
+            setProgressIndicatorActivity(false, "");
+            return;
+        }
+        clientApp.send(new FileDeleteMessage(getActiveRowFile()));
     }
 
     @SuppressWarnings("ALL")
@@ -218,7 +225,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
                         setProgressIndicatorActivity(false, "");
                         return;
                     }
-                    clientApp.send(new FileRenameMessage(oldName, newName));
+                    clientApp.send(new FileRenameMessage(getActiveRowFile(), newName));
                 },
                 () -> {
                     unblockAllButtons();
@@ -228,6 +235,24 @@ public final class MainScreen extends BaseScreen implements Initializable {
     //endregion
 
     //region Service
+
+    private void handleDoubleClick() {
+        if (rowExists()) {
+
+            File currentFile = getActiveRowFile();
+            if (currentFile == null) {
+                clientApp.send(new FilesListRequest(true));
+            } else if (currentFile.isDirectory()) {
+                clientApp.send(new FilesListRequest(true, currentFile));
+            } else {
+                downloadFile();
+            }
+        }
+    }
+
+    private boolean rowExists() {
+        return tableFiles.getSelectionModel().getFocusedIndex() != -1;
+    }
 
     private void chooseAndSendFiles() {
         FileChooser fileChooser = new FileChooser();
@@ -251,21 +276,44 @@ public final class MainScreen extends BaseScreen implements Initializable {
         }
     }
 
-    private String getActiveRowFileName() {
-        return tableData.get(tableFiles.getSelectionModel().getFocusedIndex()).getFile().getName();
+    private File getActiveRowFile() {
+        return tableData.get(tableFiles.getSelectionModel().getFocusedIndex()).getFile();
     }
 
-    public void fillTable(ArrayList<java.io.File> files) {
+    private String getActiveRowFileName() {
+        return getActiveRowFile().getName();
+    }
+
+    public synchronized void fillTable(ArrayList<File> files, boolean root) {
         tableData.clear();
+
+        if (!root) {
+            tableData.add(new TableRowData());
+        }
         for (File file : files) {
             tableData.add(new TableRowData(file));
         }
+        sortByIcon();
         tableFiles.setItems(tableData);
     }
 
+    private void sortByIcon() {
+        tableData.sort((row, rowNext) -> {
+            if (row.getIcon() == null && rowNext.getIcon() != null) {
+                return 1;
+            } else if (row.getIcon() != null && rowNext.getIcon() == null) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+    }
+
     public synchronized void setProgressIndicatorActivity(boolean visible, String message) {
-        progressIndicator.setVisible(visible);
-        progressLabel.setText(visible ? message : "");
+        Platform.runLater(() -> {
+            progressIndicator.setVisible(visible);
+            progressLabel.setText(visible ? message : "");
+        });
     }
 
     private void blockButton(Button button) {

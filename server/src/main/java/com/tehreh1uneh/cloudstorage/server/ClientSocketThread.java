@@ -9,10 +9,19 @@ class ClientSocketThread extends SocketThread {
 
     private String login;
     private String path;
+    private String currentPath = "";
     private boolean authorized = false;
 
     ClientSocketThread(SocketThreadListener eventListener, String name, Socket socket) {
         super(eventListener, name, socket);
+    }
+
+    String getCurrentPath() {
+        return currentPath;
+    }
+
+    void setCurrentPath(String currentPath) {
+        this.currentPath = currentPath;
     }
 
     String getPath() {
