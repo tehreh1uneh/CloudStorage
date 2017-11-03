@@ -9,21 +9,11 @@ public class FilesListRequest extends Message {
 
     private boolean directory;
     private String directoryPath;
-    private boolean up;
 
     public FilesListRequest(boolean directory, File file) {
         super(MessageType.FILES_LIST_REQUEST);
         this.directory = directory;
         directoryPath = file.getPath();
-    }
-
-    public FilesListRequest(boolean up) {
-        super(MessageType.FILES_LIST_REQUEST);
-        this.up = up;
-    }
-
-    public boolean isUp() {
-        return up;
     }
 
     public boolean isDirectory() {

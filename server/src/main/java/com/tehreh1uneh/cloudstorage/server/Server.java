@@ -32,10 +32,10 @@ import static com.tehreh1uneh.cloudstorage.server.Config.STORAGE_PATH;
 public class Server implements ServerSocketThreadListener, SocketThreadListener {
 
     private static final Logger logger = Logger.getLogger(Server.class);
+    private final ServerListener listener;
     private AuthorizeManager authorizeManager;
     private ServerSocketThread serverSocketThread;
     private boolean blocked = false;
-    private final ServerListener listener;
 
     public Server(ServerListener listener) {
         this.listener = listener;
@@ -73,7 +73,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
     //region Message handlers
 
-    private void handleAuthorizedClient(ClientSocketThread client, Message message) {
+    private synchronized void handleAuthorizedClient(ClientSocketThread client, Message message) {
         if (message.getType() == MessageType.DISCONNECT) {
             disconnectClient(client);
         } else if (message.getType() == MessageType.FILE) {
@@ -82,14 +82,16 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             handleFileRequest((FileRequestMessage) message, client);
         } else if (message.getType() == MessageType.FILES_LIST_REQUEST) {
             FilesListRequest request = (FilesListRequest) message;
-            if (request.isUp()) {
-                client.setCurrentPath(Paths.get(client.getCurrentPath() + FILE_SEPARATOR + "..").normalize().toString() + FILE_SEPARATOR);
-            } else if (request.isDirectory()) {
-                client.setCurrentPath(request.getDirectoryPath());
-            } else {
-                client.setCurrentPath("");
+
+            if (request.isDirectory()) {
+                client.setCurrentPath(Paths.get(request.getDirectoryPath()));
             }
-            sendFilesList(client);
+
+            sendFilesList(client, false);
+        } else if (message.getType() == MessageType.GO_BACK) {
+            sendFilesList(client, true);
+        } else if (message.getType() == MessageType.FOLDER_CREATE) {
+            handleFolderCreateMessage(client, (FolderCreateMessage) message);
         } else if (message.getType() == MessageType.FILE_DELETE) {
             deleteFile(client, (FileDeleteMessage) message);
         } else if (message.getType() == MessageType.FILE_RENAME) {
@@ -100,7 +102,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         }
     }
 
-    private void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {
+    private synchronized void handleUnauthorizedClient(ClientSocketThread client, Socket socket, Message message) {
         // TODO authorized clients - client thread map
         if (message.getType() == MessageType.AUTH_REQUEST) {
             AuthRequestMessage authRequestMessage = (AuthRequestMessage) message;
@@ -117,7 +119,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
 
                 try {
                     createUserPath(client);
-                    sendFilesList(client);
+                    sendFilesList(client, false);
                 } catch (IOException e) {
                     String errorMessage = "Не удалось создать папку для хранения данных пользователя";
                     logger.error(errorMessage, e);
@@ -148,9 +150,9 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         try {
             // TODO check file name collisions
 
-            String currentPath = client.getCurrentPath().isEmpty() ? client.getPath() : client.getCurrentPath();
+            Path currentPath = client.getCurrentPath();
             Files.write(Paths.get(currentPath + FILE_SEPARATOR + message.getName()), message.getBytes());
-            sendFilesList(client);
+            sendFilesList(client, false);
         } catch (IOException e) {
             logger.error("Пользователь: " + client.getLogin() + ". Ошибка сохранения файла");
             client.send(new ErrorMessage("Не удалось сохранить файл", false));
@@ -171,7 +173,7 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
         if (Files.exists(path)) {
             try {
                 Files.delete(path);
-                sendFilesList(client);
+                sendFilesList(client, false);
             } catch (IOException e) {
                 logger.warn("Пользователь: " + client.getLogin() + ". Не удалось удалить файл: " + path, e);
                 client.send(new ErrorMessage("Не удалось удалить файл", false));
@@ -182,15 +184,16 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     private void renameFile(ClientSocketThread client, FileRenameMessage message) {
         Path oldPath = Paths.get(message.getFile().getPath());
         Path newPath = Paths.get(message.getFile().getParent() + FILE_SEPARATOR + message.getNewName());
-        if (Files.exists(oldPath) && oldPath.toFile().renameTo(newPath.toFile())) sendFilesList(client);
+        if (Files.exists(oldPath) && oldPath.toFile().renameTo(newPath.toFile())) sendFilesList(client, false);
     }
     //endregion
 
-    private synchronized void sendFilesList(ClientSocketThread client) {
+    private synchronized void sendFilesList(ClientSocketThread client, boolean goBack) {
+
+        if (goBack) client.setCurrentPath(Paths.get(client.getCurrentPath() + FILE_SEPARATOR + "..").normalize());
+        Path currentPath = client.getCurrentPath();
 
         ArrayList<File> filesList = new ArrayList<>();
-        boolean root = client.getCurrentPath().isEmpty() || client.getPath().equals(client.getCurrentPath());
-        Path currentPath = Paths.get(root ? client.getPath() : client.getCurrentPath());
 
         try {
             Files.walk(currentPath, 1).forEach(it -> {
@@ -203,7 +206,18 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
             disconnectClient(client);
             return;
         }
-        client.send(new FilesListResponse(filesList, root));
+        client.send(new FilesListResponse(filesList, client.currentIsRoot()));
+    }
+
+    private void handleFolderCreateMessage(ClientSocketThread client, FolderCreateMessage message) {
+        Path path = Paths.get(client.getCurrentPath() + FILE_SEPARATOR + message.getName());
+        try {
+            Files.createDirectory(path);
+            sendFilesList(client, false);
+        } catch (IOException e) {
+            logger.warn("Не удалось создать папку", e);
+            client.send(new ErrorMessage("Не удалось создать папку", false));
+        }
     }
 
     private void disconnectClient(SocketThread clientThread) {
@@ -211,8 +225,8 @@ public class Server implements ServerSocketThreadListener, SocketThreadListener 
     }
 
     private void createUserPath(ClientSocketThread client) throws IOException {
-        client.setPath(STORAGE_PATH + client.getLogin() + FILE_SEPARATOR);
-        Path path = Paths.get(client.getPath());
+        client.setPath(Paths.get(STORAGE_PATH + client.getLogin()));
+        Path path = client.getPath();
         if (Files.notExists(path)) {
             Files.createDirectories(path);
         }

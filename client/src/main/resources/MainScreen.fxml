@@ -10,6 +10,7 @@
     <top>
         <MenuBar>
             <Menu text="Меню">
+                <MenuItem onAction="#onActionCreateFolder" text="Создать папку"/>
                 <MenuItem mnemonicParsing="false" onAction="#onActionLogOut" text="Сменить пользователя"/>
                 <MenuItem onAction="#onActionExit" text="Выход"/>
             </Menu>

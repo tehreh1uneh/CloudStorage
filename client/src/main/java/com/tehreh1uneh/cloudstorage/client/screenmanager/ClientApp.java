@@ -37,7 +37,7 @@ import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.*;
 
 // TODO create ?observers for screens
 
-public class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
+public final class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private static final Logger logger = Logger.getLogger(ClientApp.class);
 
@@ -46,10 +46,6 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     private Stage stage;
     private SocketThread socketThread;
     private BaseScreen screen;
-
-    public Stage getStage() {
-        return stage;
-    }
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -164,6 +160,11 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
     }
 
     //endregion
+
+    public Stage getStage() {
+        return stage;
+    }
+
 
     //region SocketThread
 
@@ -293,6 +294,7 @@ public class ClientApp extends Application implements SocketThreadListener, Thre
 
     @Override
     public void uncaughtException(Thread thread, Throwable e) {
+        Notifier.show(10, "Ошибка приложения", "При работе приложения возникла ошибка. Приложение было остановлено.", Notifier.NotificationType.ERROR);
         logger.fatal("Ошибка клиентского приложения", e);
         System.exit(1);
     }

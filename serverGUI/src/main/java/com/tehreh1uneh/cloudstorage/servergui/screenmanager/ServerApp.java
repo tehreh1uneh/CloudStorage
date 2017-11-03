@@ -63,6 +63,7 @@ public class ServerApp extends Application implements ServerListener, Thread.Unc
 
     @Override
     public void uncaughtException(Thread thread, Throwable e) {
+        Notifier.show(10, "Ошибка приложения", "При работе приложения возникла ошибка. Приложение было остановлено.", Notifier.NotificationType.ERROR);
         logger.fatal("Ошибка в потоке " + thread.getName(), e);
         System.exit(1);
     }

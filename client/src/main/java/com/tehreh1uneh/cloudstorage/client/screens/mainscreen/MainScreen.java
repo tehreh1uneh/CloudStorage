@@ -232,16 +232,53 @@ public final class MainScreen extends BaseScreen implements Initializable {
                     setProgressIndicatorActivity(false, "");
                 });
     }
+
+    @SuppressWarnings("ALL")
+    public void onActionCreateFolder() {
+
+        TextInputDialog dialog = new TextInputDialog("Новая папка");
+        dialog.setTitle("Создать папку");
+        dialog.setHeaderText("Создание папки");
+        dialog.setContentText("Введите имя папки:");
+
+        Pattern pattern = Pattern.compile(
+                "# Match a valid Windows filename (unspecified file system).          \n" +
+                        "^                                # Anchor to start of string.        \n" +
+                        "(?!                              # Assert filename is not: CON, PRN, \n" +
+                        "  (?:                            # AUX, NUL, COM1, COM2, COM3, COM4, \n" +
+                        "    CON|PRN|AUX|NUL|             # COM5, COM6, COM7, COM8, COM9,     \n" +
+                        "    COM[1-9]|LPT[1-9]            # LPT1, LPT2, LPT3, LPT4, LPT5,     \n" +
+                        "  )                              # LPT6, LPT7, LPT8, and LPT9...     \n" +
+                        "  (?:\\.[^.]*)?                  # followed by optional extension    \n" +
+                        "  $                              # and end of string                 \n" +
+                        ")                                # End negative lookahead assertion. \n" +
+                        "[^<>:\"/\\\\|?*\\x00-\\x1F]*     # Zero or more valid filename chars.\n" +
+                        "[^<>:\"/\\\\|?*\\x00-\\x1F\\ .]  # Last char is not a space or dot.  \n" +
+                        "$                                # Anchor to end of string.            ",
+                Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.COMMENTS);
+
+        Optional<String> result = dialog.showAndWait();
+
+        result.ifPresent(newName -> {
+            Matcher matcher = pattern.matcher(newName);
+            if (!matcher.matches()) {
+                Notifier.show(5d, "Ошибка", "Имя папки содержит недопустимые символы или является зарезервированным", Notifier.NotificationType.ERROR);
+                return;
+            }
+            clientApp.send(new FolderCreateMessage(newName));
+        });
+    }
+
     //endregion
 
     //region Service
 
-    private void handleDoubleClick() {
+    private synchronized void handleDoubleClick() {
         if (rowExists()) {
 
             File currentFile = getActiveRowFile();
             if (currentFile == null) {
-                clientApp.send(new FilesListRequest(true));
+                clientApp.send(new GoBackMessage());
             } else if (currentFile.isDirectory()) {
                 clientApp.send(new FilesListRequest(true, currentFile));
             } else {
@@ -276,7 +313,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         }
     }
 
-    private File getActiveRowFile() {
+    private synchronized File getActiveRowFile() {
         return tableData.get(tableFiles.getSelectionModel().getFocusedIndex()).getFile();
     }
 
@@ -327,6 +364,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         buttonRename.setDisable(false);
         buttonUpload.setDisable(false);
     }
+
 
     //endregion
 

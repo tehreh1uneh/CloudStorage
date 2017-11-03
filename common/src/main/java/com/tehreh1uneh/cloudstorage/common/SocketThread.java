@@ -54,7 +54,7 @@ public class SocketThread extends Thread {
         }
     }
 
-    public void send(Message msg) {
+    public synchronized void send(Message msg) {
         busy = true;
         try {
             out.writeObject(msg);

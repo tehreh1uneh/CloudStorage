@@ -4,31 +4,41 @@ import com.tehreh1uneh.cloudstorage.common.SocketThread;
 import com.tehreh1uneh.cloudstorage.common.SocketThreadListener;
 
 import java.net.Socket;
+import java.nio.file.Path;
 
 class ClientSocketThread extends SocketThread {
 
     private String login;
-    private String path;
-    private String currentPath = "";
+    private Path path;
+    private Path currentPath;
     private boolean authorized = false;
 
     ClientSocketThread(SocketThreadListener eventListener, String name, Socket socket) {
         super(eventListener, name, socket);
     }
 
-    String getCurrentPath() {
+    Path getCurrentPath() {
+        if (currentPath == null) currentPath = path;
         return currentPath;
     }
 
-    void setCurrentPath(String currentPath) {
-        this.currentPath = currentPath;
+    void setCurrentPath(Path currentPath) {
+        if (!currentPath.startsWith(path)) {
+            this.currentPath = path;
+        } else {
+            this.currentPath = currentPath;
+        }
     }
 
-    String getPath() {
+    boolean currentIsRoot() {
+        return path.equals(currentPath);
+    }
+
+    Path getPath() {
         return path;
     }
 
-    void setPath(String path) {
+    void setPath(Path path) {
         this.path = path;
     }
 
