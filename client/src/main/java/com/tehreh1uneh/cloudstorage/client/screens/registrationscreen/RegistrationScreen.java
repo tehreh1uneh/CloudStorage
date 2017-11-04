@@ -4,6 +4,7 @@ import com.tehreh1uneh.cloudstorage.client.screens.BaseScreen;
 import com.tehreh1uneh.cloudstorage.common.notification.Notifier;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import org.apache.log4j.Logger;
@@ -25,6 +26,9 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
     private TextField password;
     @FXML
     private TextField login;
+    @FXML
+    private Button buttonRegister;
+
     //endregion
 
     @Override
@@ -83,6 +87,7 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
         password.setEditable(false);
         passwordConfirmation.setEditable(false);
         progressIndicator.setVisible(true);
+        buttonRegister.setDisable(true);
     }
 
     public void unblock() {
@@ -91,5 +96,6 @@ public final class RegistrationScreen extends BaseScreen implements Initializabl
         password.setEditable(true);
         passwordConfirmation.setEditable(true);
         progressIndicator.setVisible(false);
+        buttonRegister.setDisable(false);
     }
 }

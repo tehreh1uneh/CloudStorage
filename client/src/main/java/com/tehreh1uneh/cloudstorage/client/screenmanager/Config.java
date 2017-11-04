@@ -15,7 +15,7 @@ public final class Config {
     static final String STORAGE_PATH = USER_HOME + FILE_SEPARATOR + "Downloads" + FILE_SEPARATOR + "CloudStorage" + FILE_SEPARATOR;
 
     static final String AUTH_VIEW_PATH = "/AuthScreen.fxml";
-    static final String AUTH_VIEW_TITLE = "Авторизация";
+    static final String AUTH_VIEW_TITLE = "Cloud Storage";
     static final int AUTH_VIEW_WIDTH = 350;
     static final int AUTH_VIEW_HEIGHT = 450;
 

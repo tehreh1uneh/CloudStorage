@@ -35,8 +35,6 @@ import java.util.ArrayList;
 
 import static com.tehreh1uneh.cloudstorage.client.screenmanager.Config.*;
 
-// TODO create ?observers for screens
-
 public final class ClientApp extends Application implements SocketThreadListener, Thread.UncaughtExceptionHandler {
 
     private static final Logger logger = Logger.getLogger(ClientApp.class);
@@ -46,6 +44,7 @@ public final class ClientApp extends Application implements SocketThreadListener
     private Stage stage;
     private SocketThread socketThread;
     private BaseScreen screen;
+
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -60,7 +59,7 @@ public final class ClientApp extends Application implements SocketThreadListener
             replaceSceneContent(AUTH_VIEW_PATH);
 
             stage.setOnCloseRequest(windowEvent -> {
-                disconnect(true);
+                disconnect(true, false);
                 System.exit(0);
             });
 
@@ -80,12 +79,20 @@ public final class ClientApp extends Application implements SocketThreadListener
     private void setMainScreen() {
         try {
             replaceSceneContent(MAIN_VIEW_PATH);
-            Platform.runLater(() -> {
+
+            if (Platform.isFxApplicationThread()) {
                 stage.setTitle(MAIN_VIEW_TITLE);
                 stage.setResizable(true);
                 stage.setWidth(MAIN_VIEW_WIDTH);
                 stage.setHeight(MAIN_VIEW_HEIGHT);
-            });
+            } else {
+                Platform.runLater(() -> {
+                    stage.setTitle(MAIN_VIEW_TITLE);
+                    stage.setResizable(true);
+                    stage.setWidth(MAIN_VIEW_WIDTH);
+                    stage.setHeight(MAIN_VIEW_HEIGHT);
+                });
+            }
 
             logger.info("Main screen: установлен успешно");
         } catch (Exception e) {
@@ -141,11 +148,11 @@ public final class ClientApp extends Application implements SocketThreadListener
     }
 
     public void logOut() {
-        disconnect(true);
+        disconnect(true, true);
         setAuthScreen();
     }
 
-    private void disconnect(boolean notifyServer) {
+    private void disconnect(boolean notifyServer, boolean resetScreen) {
         if (socketThread != null && socketThread.isAlive()) {
             if (notifyServer) {
                 socketThread.send(new DisconnectMessage());
@@ -153,9 +160,14 @@ public final class ClientApp extends Application implements SocketThreadListener
             }
             socketThread.interrupt();
             logger.info("Соединение с сервером разорвано");
-            if (!(screen instanceof AuthScreen)) {
+
+            if (resetScreen) {
                 Platform.runLater(this::setAuthScreen);
             }
+
+//            if (!(screen instanceof AuthScreen) && !(screen instanceof RegistrationScreen)) {
+//                Platform.runLater(this::setAuthScreen);
+//            }
         }
     }
 
@@ -164,7 +176,6 @@ public final class ClientApp extends Application implements SocketThreadListener
     public Stage getStage() {
         return stage;
     }
-
 
     //region SocketThread
 
@@ -218,7 +229,8 @@ public final class ClientApp extends Application implements SocketThreadListener
     @Override
     public void onExceptionSocketThread(SocketThread socketThread, Socket socket, Exception e) {
         logger.fatal("Ошибка в ClientSide SocketThread: ", e);
-        throw new RuntimeException();
+        Notifier.show(10, "Ошибка", "Произошла непредвиденная ошибка на сервере. Соединение разорвано", Notifier.NotificationType.ERROR);
+        disconnect(false, true);
     }
     //endregion
 
@@ -232,7 +244,7 @@ public final class ClientApp extends Application implements SocketThreadListener
         } else {
             Notifier.show(5d, "Авторизация", message.getMessage(), Notifier.NotificationType.INFORMATION);
             logger.info("Запрос авторизации отклонен сервером");
-            disconnect(false);
+            disconnect(false, false);
             ((AuthScreen) screen).unblock();
         }
     }
@@ -240,8 +252,12 @@ public final class ClientApp extends Application implements SocketThreadListener
     private void handleErrorMessage(ErrorMessage message) {
         Notifier.show(5d, "Ошибка на сервере", message.getDescrition(), Notifier.NotificationType.ERROR);
         logger.error("Ошибка на сервере: " + message.getDescrition());
+        if (screen instanceof MainScreen) {
+            ((MainScreen) screen).unblockAllButtons();
+            ((MainScreen) screen).setProgressIndicatorActivity(false, "");
+        }
         if (message.isDisconnect()) {
-            disconnect(false);
+            disconnect(false, true);
         }
     }
 
@@ -258,17 +274,23 @@ public final class ClientApp extends Application implements SocketThreadListener
 
     private void handleFileMessage(FileMessage message) {
         try {
-            // TODO check file name collisions
             Path savePath = Paths.get(STORAGE_PATH);
             if (Files.notExists(savePath)) {
                 Files.createDirectories(savePath);
             }
-            Files.write(Paths.get(STORAGE_PATH + message.getName()), message.getBytes());
+
+            StringBuilder builder = new StringBuilder(STORAGE_PATH);
+            Path filePath = Paths.get(builder.toString() + message.getName());
+            while (Files.exists(filePath)) {
+                filePath = Paths.get(builder.append("_").toString() + message.getName());
+            }
+
+            Files.write(filePath, message.getBytes());
 
             if (screen instanceof MainScreen) {
                 MainScreen mainScreen = (MainScreen) screen;
                 mainScreen.unblockAllButtons();
-                Platform.runLater(() -> mainScreen.setProgressIndicatorActivity(false, ""));
+                mainScreen.setProgressIndicatorActivity(false, "");
             }
 
         } catch (IOException e) {
@@ -280,12 +302,14 @@ public final class ClientApp extends Application implements SocketThreadListener
     private void handleRegistrationMessage(RegistrationResponseMessage message) {
         if (message.isRegistered()) {
             Notifier.show(5d, "Регистрация", "Пользователь успешно зарегистрирован", Notifier.NotificationType.INFORMATION);
-            Platform.runLater(this::setAuthScreen);
+            disconnect(false, true);
         } else {
             Notifier.show(5d, "Регистрация", message.getMessage(), Notifier.NotificationType.ERROR);
             ((RegistrationScreen) screen).unblock();
+            disconnect(false, false);
         }
     }
+
     //endregion
 
     public void send(Message message) {
@@ -294,7 +318,7 @@ public final class ClientApp extends Application implements SocketThreadListener
 
     @Override
     public void uncaughtException(Thread thread, Throwable e) {
-        Notifier.show(10, "Ошибка приложения", "При работе приложения возникла ошибка. Приложение было остановлено.", Notifier.NotificationType.ERROR);
+        Notifier.show(10d, "Ошибка приложения", "При работе приложения возникла ошибка. Приложение было остановлено.", Notifier.NotificationType.ERROR);
         logger.fatal("Ошибка клиентского приложения", e);
         System.exit(1);
     }

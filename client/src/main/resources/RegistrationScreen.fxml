@@ -65,7 +65,8 @@
                 </font>
             </PasswordField>
 
-            <Button defaultButton="true" onAction="#onActionRegister" text="Зарегистрироваться" GridPane.columnIndex="3"
+            <Button fx:id="buttonRegister" defaultButton="true" onAction="#onActionRegister" text="Зарегистрироваться"
+                    GridPane.columnIndex="3"
                     GridPane.rowIndex="7"/>
             <Button onAction="#onActionCancel" text="Отмена" GridPane.columnIndex="3" GridPane.rowIndex="9"/>
 

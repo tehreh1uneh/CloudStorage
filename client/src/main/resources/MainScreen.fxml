@@ -3,8 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="600.0"
-            xmlns="http://javafx.com/javafx/8.0.121"
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.121"
             fx:controller="com.tehreh1uneh.cloudstorage.client.screens.mainscreen.MainScreen">
 
     <top>
@@ -22,10 +21,11 @@
     </top>
 
     <center>
+
         <TableView fx:id="tableFiles" onDragDropped="#onDragDropped" onDragOver="#onDragOver"
                    onKeyPressed="#onTableKeyPressed" onMouseClicked="#onTableMouseClick" BorderPane.alignment="CENTER">
             <columns>
-                <TableColumn fx:id="colImage" resizable="false"/>
+                <TableColumn fx:id="colImage"/>
                 <TableColumn fx:id="colFileName" text="Имя файла"/>
                 <TableColumn fx:id="colModified" text="Изменен"/>
                 <TableColumn fx:id="colType" text="Тип"/>
@@ -35,6 +35,7 @@
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
             </columnResizePolicy>
         </TableView>
+
     </center>
 
     <bottom>
@@ -67,8 +68,7 @@
                     </font>
                 </Label>
 
-                <Button fx:id="buttonDownload" onAction="#onActionButtonDownload" text="Скачать"
-                        textAlignment="CENTER">
+                <Button fx:id="buttonDownload" onAction="#onActionButtonDownload" text="Скачать" textAlignment="CENTER">
                     <font>
                         <Font name="Monaco Plain:001.001" size="10.0"/>
                     </font>

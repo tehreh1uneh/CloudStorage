@@ -37,11 +37,11 @@ public final class MainScreen extends BaseScreen implements Initializable {
     private static final Logger logger = Logger.getLogger(MainScreen.class);
 
     //region View fields
+    private final ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
     @FXML
     TableColumn<TableRowData, String> colType;
     @FXML
     TableColumn<TableRowData, String> colSize;
-    private final ObservableList<TableRowData> tableData = FXCollections.observableArrayList();
     @FXML
     private TableView<TableRowData> tableFiles;
     @FXML
@@ -62,12 +62,14 @@ public final class MainScreen extends BaseScreen implements Initializable {
     private ProgressIndicator progressIndicator;
     @FXML
     private Label progressLabel;
+
     //endregion
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         colImage.setCellValueFactory(new PropertyValueFactory<>("icon"));
-        colImage.setPrefWidth(COLUMN_FOLDER_WIDTH);
+        colImage.setMaxWidth(COLUMN_FOLDER_WIDTH);
+        colImage.setMinWidth(COLUMN_FOLDER_WIDTH);
 
         colFileName.setCellValueFactory(new PropertyValueFactory<>("fileName"));
         colModified.setCellValueFactory(new PropertyValueFactory<>("modified"));
@@ -111,7 +113,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
         if (keyEvent.getCode() == KeyCode.ENTER) {
             handleDoubleClick();
         } else if (keyEvent.getCode() == KeyCode.DELETE) {
-            deleteFile();
+            new Thread(this::deleteFile).start();
         } else if (keyEvent.getCode() == KeyCode.INSERT) {
             chooseAndSendFiles();
         } else if (keyEvent.getCode() == KeyCode.F2) {
@@ -132,15 +134,11 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     @FXML
     private void onActionButtonDownload() {
-        blockButton(buttonDownload);
-        setProgressIndicatorActivity(true, "Загрузка файла...");
         new Thread(this::downloadFile).start();
     }
 
     @FXML
     private void onActionButtonDelete() {
-        blockButton(buttonDelete);
-        setProgressIndicatorActivity(true, "Удаление файла...");
         new Thread(this::deleteFile).start();
     }
 
@@ -149,20 +147,23 @@ public final class MainScreen extends BaseScreen implements Initializable {
         renameFile();
     }
 
-    public void onDragOver(DragEvent dragEvent) {
+    @FXML
+    private void onDragOver(DragEvent dragEvent) {
         Dragboard board = dragEvent.getDragboard();
-        if (board.hasFiles()) {
+        if (board.hasFiles() && board.getFiles().stream().noneMatch(File::isDirectory)) {
             dragEvent.acceptTransferModes(TransferMode.COPY);
         }
-
     }
 
     @FXML
     private void onDragDropped(DragEvent dragEvent) {
         Dragboard board = dragEvent.getDragboard();
         List<File> files = board.getFiles();
-        for (File file : files) {
-            sendFile(file);
+
+        if (files.size() == 1) {
+            sendFile(files.get(0));
+        } else if (files.size() > 0) {
+            sendSeveralFiles(files);
         }
     }
 
@@ -171,11 +172,15 @@ public final class MainScreen extends BaseScreen implements Initializable {
     //region Actions
     private void downloadFile() {
         if (!rowExists()) return;
+        blockButton(buttonDownload);
+        setProgressIndicatorActivity(true, "Загрузка файла...");
         clientApp.send(new FileRequestMessage(getActiveRowFile()));
     }
 
     private void deleteFile() {
         if (!rowExists()) return;
+        blockButton(buttonDelete);
+        setProgressIndicatorActivity(true, "Удаление файла...");
         File file = getActiveRowFile();
         if (file == null) {
             unblockAllButtons();
@@ -282,7 +287,7 @@ public final class MainScreen extends BaseScreen implements Initializable {
             } else if (currentFile.isDirectory()) {
                 clientApp.send(new FilesListRequest(true, currentFile));
             } else {
-                downloadFile();
+                new Thread(this::downloadFile).start();
             }
         }
     }
@@ -294,12 +299,14 @@ public final class MainScreen extends BaseScreen implements Initializable {
     private void chooseAndSendFiles() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Выберите файлы для передачи");
+        List<File> files = fileChooser.showOpenMultipleDialog(clientApp.getStage());
 
-        List<java.io.File> files = fileChooser.showOpenMultipleDialog(clientApp.getStage());
-        if (files != null) {
-            for (java.io.File file : files) {
-                sendFile(file);
-            }
+        if (files == null) return;
+
+        if (files.size() == 1) {
+            sendFile(files.get(0));
+        } else if (files.size() > 0) {
+            sendSeveralFiles(files);
         }
     }
 
@@ -311,6 +318,32 @@ public final class MainScreen extends BaseScreen implements Initializable {
         } else {
             Notifier.show(5d, "Выгрузка", "Максимальный размер передаваемого файла: " + MAX_FILE_SIZE_DESCRIPTION + ". \n Файл \"" + file.getName() + "\" пропущен", Notifier.NotificationType.WARNING);
         }
+    }
+
+    private void sendSeveralFiles(List<File> files) {
+
+        boolean blocked = false;
+        boolean started = false;
+        StringBuilder builder = new StringBuilder();
+
+        for (File file : files) {
+            if (file.length() <= MAX_FILE_SIZE) {
+                if (!blocked) {
+                    blockButton(buttonDownload);
+                    setProgressIndicatorActivity(true, "Выгрузка файла...");
+                    blocked = true;
+                }
+                clientApp.send(new FileMessage(file));
+            } else {
+                if (!started) {
+                    started = true;
+                    builder.append("Максимальный размер передаваемого файла: ").append(MAX_FILE_SIZE_DESCRIPTION).append(". \nПропущенные файлы: \n");
+                }
+                builder.append(file.getName()).append("\n");
+            }
+        }
+
+        Notifier.show(5d, "Выгрузка", builder.toString(), Notifier.NotificationType.WARNING);
     }
 
     private synchronized File getActiveRowFile() {
@@ -341,16 +374,22 @@ public final class MainScreen extends BaseScreen implements Initializable {
             } else if (row.getIcon() != null && rowNext.getIcon() == null) {
                 return -1;
             } else {
-                return 0;
+                return row.getFileName().compareTo(rowNext.getFileName());
             }
         });
     }
 
     public synchronized void setProgressIndicatorActivity(boolean visible, String message) {
-        Platform.runLater(() -> {
+
+        if (Platform.isFxApplicationThread()) {
             progressIndicator.setVisible(visible);
-            progressLabel.setText(visible ? message : "");
-        });
+            progressLabel.setText(message);
+        } else {
+            Platform.runLater(() -> {
+                progressIndicator.setVisible(visible);
+                progressLabel.setText(message);
+            });
+        }
     }
 
     private void blockButton(Button button) {
@@ -359,15 +398,23 @@ public final class MainScreen extends BaseScreen implements Initializable {
 
     // TODO unblock one button, server should send it
     public void unblockAllButtons() {
-        buttonDelete.setDisable(false);
-        buttonDownload.setDisable(false);
-        buttonRename.setDisable(false);
-        buttonUpload.setDisable(false);
+
+        if (Platform.isFxApplicationThread()) {
+            buttonDelete.setDisable(false);
+            buttonDownload.setDisable(false);
+            buttonRename.setDisable(false);
+            buttonUpload.setDisable(false);
+        } else {
+            Platform.runLater(() -> {
+                buttonDelete.setDisable(false);
+                buttonDownload.setDisable(false);
+                buttonRename.setDisable(false);
+                buttonUpload.setDisable(false);
+            });
+        }
     }
 
-
     //endregion
-
 }
 
 
