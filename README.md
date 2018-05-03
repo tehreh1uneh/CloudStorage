@@ -17,7 +17,22 @@
 5. Передача файлов с использованием drag and drop
 6. Создание папок на сервере
 7. Навигация по иерархии папок на сервере
-
+  
+Серверное приложение:  
+![Server start](https://github.com/tehreh1uneh/CloudStorage/blob/master/Cloud_storage_server_start.png)  
+  
+Регистрация:  
+![Registration](https://github.com/tehreh1uneh/CloudStorage/blob/master/Cloud_storage_client_registration.png)  
+  
+Авторизация:  
+![Authentication](https://github.com/tehreh1uneh/CloudStorage/blob/master/Cloud_storage_client_auth.png)  
+  
+Рабочая область:  
+![Workspace](https://github.com/tehreh1uneh/CloudStorage/blob/master/Cloud_storage_client_drag_and_drop.png)  
+  
+Переименование:  
+![Rename](https://github.com/tehreh1uneh/CloudStorage/blob/master/Cloud_storage_client_rename.png)  
+  
 ###### Планы доработок:
 1. Активация соседней строки после удаления файла
 2. Контекстное меню со всеми командами
